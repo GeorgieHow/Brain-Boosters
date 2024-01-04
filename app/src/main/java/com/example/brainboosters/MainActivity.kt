@@ -1,6 +1,7 @@
 package com.example.brainboosters
 
 import android.app.AlertDialog
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -57,10 +58,13 @@ class MainActivity : ComponentActivity() {
                     ) { task ->
                         if (task.isSuccessful) {
                             //remove done and make them go to home page LOL.
-                            Toast.makeText(this, "Account does exist", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "Account does exist",
+                                Toast.LENGTH_SHORT).show()
+                            val intent = Intent(this, HomePageActivity::class.java)
+                            startActivity(intent)
                         } else {
-                            Toast.makeText(this, "Account does not exist", Toast.LENGTH_SHORT)
-                                .show()
+                            Toast.makeText(this, "Account does not exist",
+                                Toast.LENGTH_SHORT).show()
                         }
                     }
             }
