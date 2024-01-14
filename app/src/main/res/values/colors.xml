@@ -14,5 +14,5 @@
     <color name="colorGradientMiddle">#446b6a</color>
     <color name="colorGradientEnd">#32343e</color>
 
-    <color name="transparentWhite">#80FFFFFF</color>
+    <color name="transparentWhite">#40FFFFFF</color>
 </resources>
