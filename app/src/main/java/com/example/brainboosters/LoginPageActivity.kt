@@ -68,6 +68,11 @@ class LoginPageActivity : ComponentActivity() {
 
         }
 
+        val backButton = findViewById<Button>(R.id.backButton)
+        backButton.setOnClickListener{
+            finish()
+        }
+
 
     }
 }

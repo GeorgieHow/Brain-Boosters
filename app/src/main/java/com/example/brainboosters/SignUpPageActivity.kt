@@ -1,7 +1,9 @@
 package com.example.brainboosters
 
+import android.content.Intent
 import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
+import android.widget.Button
 import androidx.activity.ComponentActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 
@@ -17,5 +19,10 @@ class SignUpPageActivity : ComponentActivity() {
         animDrawable.setEnterFadeDuration(10)
         animDrawable.setExitFadeDuration(5000)
         animDrawable.start()
+
+        val backButton = findViewById<Button>(R.id.backButton)
+        backButton.setOnClickListener{
+            finish()
+        }
     }
 }
