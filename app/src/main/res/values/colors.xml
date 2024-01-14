@@ -7,4 +7,12 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!--> Colours for gradient defined here <-->
+
+    <color name="colorGradientStart">#5ba95d</color>
+    <color name="colorGradientMiddle">#446b6a</color>
+    <color name="colorGradientEnd">#32343e</color>
+
+    <color name="transparentWhite">#80FFFFFF</color>
 </resources>

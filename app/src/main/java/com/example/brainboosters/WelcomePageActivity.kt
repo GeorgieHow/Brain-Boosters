@@ -1,0 +1,23 @@
+package com.example.brainboosters
+import android.graphics.drawable.AnimationDrawable
+import android.os.Bundle
+import android.view.View
+import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
+
+class WelcomePageActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.welcome_page)
+
+
+        val rootLayout = findViewById<ConstraintLayout>(R.id.welcome_page_layout)
+        val animDrawable = rootLayout.background as AnimationDrawable
+
+        animDrawable.setEnterFadeDuration(10)
+        animDrawable.setExitFadeDuration(5000)
+        animDrawable.start()
+    }
+
+}
