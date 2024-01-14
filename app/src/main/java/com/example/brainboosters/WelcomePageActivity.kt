@@ -1,7 +1,9 @@
 package com.example.brainboosters
+import android.content.Intent
 import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 
@@ -18,6 +20,12 @@ class WelcomePageActivity : AppCompatActivity() {
         animDrawable.setEnterFadeDuration(10)
         animDrawable.setExitFadeDuration(5000)
         animDrawable.start()
+
+        val loginButton = findViewById<Button>(R.id.loginButton)
+        loginButton.setOnClickListener{
+            val intent = Intent(this, LoginPageActivity::class.java)
+            startActivity(intent)
+        }
     }
 
 }
