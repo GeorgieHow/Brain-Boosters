@@ -8,10 +8,11 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.firebase.auth.FirebaseAuth
 
-class SignUpPageActivity : ComponentActivity() {
+class SignUpPageActivity : AppCompatActivity() {
 
     private var mAuth = FirebaseAuth.getInstance()
 
