@@ -21,8 +21,7 @@
         android:id="@+id/bottom_nav_bar"
         android:layout_width="0dp"
         android:layout_height="60dp"
-        android:background="#fff"
-        android:backgroundTint="#282828"
+        android:background="@color/primaryColor"
         android:fadingEdge="horizontal"
         app:cnb_menuResource="@menu/menu"
         app:cnb_unselectedColor="@android:color/white"
@@ -31,7 +30,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"/>
+        app:layout_constraintStart_toStartOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

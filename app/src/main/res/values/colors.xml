@@ -10,9 +10,29 @@
 
     <!--> Colours for gradient defined here <-->
 
-    <color name="colorGradientStart">#5ba95d</color>
-    <color name="colorGradientMiddle">#446b6a</color>
-    <color name="colorGradientEnd">#32343e</color>
+    <color name="colorGradientStart">#3a693a</color>
+    <color name="colorGradientMiddle">#52634f</color>
+    <color name="colorGradientEnd">#39656b</color>
+
+    <!--> My Palette: <-->
+
+    <color name="primaryColor">#3a693a</color>
+    <color name="secondaryColor">#52634f</color>
+    <color name="tertiaryColor">#39656b</color>
+    <color name="errorColor">#ba1a1a</color>
+
+    <color name="primaryContainerColor">#bbf0b5</color>
+    <color name="secondaryContainerColor">#d5e8cf</color>
+    <color name="tertiaryContainerColor">#001f23</color>
+    <color name="errorContainerColor">#ffdad6</color>
+
+    <color name="surfaceColor">#f7fbf1</color>
+    <color name="inverseSurfaceColor">#2d322c</color>
+
+
+
+    <!--> Original Gradient Colours here: Start - 5ba95d  Middle - 446b6a End - 32343e <-->
+    <!--> Material Foundation Reccomended colors: Primary - #3a693a Secondary - #52634f Tertiary - #39656b <-->
 
     <color name="transparentWhite">#40FFFFFF</color>
 </resources>
