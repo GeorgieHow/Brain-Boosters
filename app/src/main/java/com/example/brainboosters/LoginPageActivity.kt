@@ -56,8 +56,6 @@ class LoginPageActivity : AppCompatActivity() {
                                 Toast.LENGTH_SHORT).show()
                             val intent = Intent(this, HomePageActivity::class.java)
                             startActivity(intent)
-                            findViewById<EditText>(R.id.emailText).setText("")
-                            findViewById<EditText>(R.id.passwordText).setText("")
                         } else {
                             Toast.makeText(this, "Account does not exist",
                                 Toast.LENGTH_SHORT).show()

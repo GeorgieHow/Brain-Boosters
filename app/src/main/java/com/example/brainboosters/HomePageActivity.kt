@@ -1,13 +1,8 @@
 package com.example.brainboosters
 
 import android.os.Bundle
-import android.widget.Button
-import android.widget.TextView
-import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.auth.FirebaseAuth
 import com.ismaeldivita.chipnavigation.ChipNavigationBar
-import androidx.fragment.app.FragmentActivity
 
 class HomePageActivity : AppCompatActivity() {
 /*
@@ -37,7 +32,7 @@ class HomePageActivity : AppCompatActivity() {
 
     }*/
 
-    val fragment = HomeFragment()
+    val fragment = HomeFragmentActivity()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.home_page)
@@ -53,7 +48,7 @@ class HomePageActivity : AppCompatActivity() {
                     openMainFragment()
                 }
                 R.id.nav_gallery -> {
-                    val favoriteFragment = GalleryFragment()
+                    val favoriteFragment = GalleryFragmentActivity()
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.fragmentContainerView, favoriteFragment).commit()
 

@@ -6,16 +6,31 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 
-class HomeFragment : Fragment() {
+class HomeFragmentActivity : Fragment() {
 
     private var mAuth = FirebaseAuth.getInstance()
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View?
             = inflater.inflate(R.layout.home_fragment, container, false).apply {
+
+
+        //Welcome Message set up for the user
+        val welcomeMessage = findViewById<TextView>(R.id.welcome_text)
+        val user = mAuth.currentUser
+
+        if (user != null) {
+            welcomeMessage.text = "Welcome " + user.email
+        }
+        else {
+            welcomeMessage.text = "User Not Found."
+        }
+
+        //Log-Out Button Functionality, Signs out user and takes them back to the welcome page
         val logOutButton = findViewById<Button>(R.id.log_out_button)
         logOutButton.setOnClickListener{
             mAuth.signOut()

@@ -53,7 +53,11 @@ android {
 
 dependencies {
 
+    //Firebase platform dependency
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+
+    //Firebase Firestore Database
+    implementation ("com.google.firebase:firebase-firestore-ktx")
 
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
@@ -67,7 +71,10 @@ dependencies {
     implementation("com.google.firebase:firebase-auth:22.3.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
+
+    //Navigation Bar at the bottom dependency
     implementation("com.github.ismaeldivita:chip-navigation-bar:1.4.0")
+
     implementation("androidx.appcompat:appcompat:1.3.0")
     implementation("androidx.fragment:fragment-ktx:1.3.6")
     testImplementation("junit:junit:4.13.2")
