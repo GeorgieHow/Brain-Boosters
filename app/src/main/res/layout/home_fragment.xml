@@ -38,6 +38,25 @@
             app:layout_constraintTop_toBottomOf="@id/home_title"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
+        <TextView
+            android:id="@+id/welcome_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="30dp"
+            android:text="Welcome,"
+            android:textSize="14pt"
+            android:textColor="@color/inverseSurfaceColor"
+            app:layout_constraintTop_toTopOf="@id/home_menu"
+            app:layout_constraintStart_toStartOf="@id/home_menu"/>
+
+        <TextView
+            android:id="@+id/user_fullname"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12pt"
+            android:textColor="@color/inverseSurfaceColor"
+            app:layout_constraintTop_toBottomOf="@+id/welcome_message"
+            app:layout_constraintStart_toStartOf="@id/welcome_message"/>
 
         <Button
             android:id="@+id/log_out_button"
@@ -50,13 +69,5 @@
             app:layout_constraintStart_toStartOf="@id/home_menu"
             app:layout_constraintBottom_toBottomOf="@id/home_menu"/>
 
-        <TextView
-            android:id="@+id/welcome_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="40dp"
-            android:textColor="@color/inverseSurfaceColor"
-            app:layout_constraintStart_toStartOf="@id/home_menu"
-            app:layout_constraintTop_toTopOf="@id/home_menu"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>

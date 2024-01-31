@@ -2,6 +2,7 @@ package com.example.brainboosters
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,10 +10,17 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class HomeFragmentActivity : Fragment() {
 
     private var mAuth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+
+
+
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View?
@@ -20,15 +28,28 @@ class HomeFragmentActivity : Fragment() {
 
 
         //Welcome Message set up for the user
-        val welcomeMessage = findViewById<TextView>(R.id.welcome_text)
-        val user = mAuth.currentUser
+        val fullNameTextView = findViewById<TextView>(R.id.user_fullname)
 
-        if (user != null) {
-            welcomeMessage.text = "Welcome " + user.email
+        val userEmail = mAuth.currentUser?.email
+        val usersCollection = FirebaseFirestore.getInstance().collection("users")
+        var email = ""
+        var fullName = ""
+
+        usersCollection.whereEqualTo("email", userEmail).get().addOnSuccessListener { documents ->
+            if (!documents.isEmpty) {
+
+                val document = documents.documents[0]
+
+                email = document.getString("email").toString()
+                fullName = document.getString("fullName").toString()
+
+                if(fullName != null){
+                    fullNameTextView.text = fullName
+                }
+            }
         }
-        else {
-            welcomeMessage.text = "User Not Found."
-        }
+
+
 
         //Log-Out Button Functionality, Signs out user and takes them back to the welcome page
         val logOutButton = findViewById<Button>(R.id.log_out_button)

@@ -11,10 +11,15 @@ import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
 class SignUpPageActivity : AppCompatActivity() {
 
     private var mAuth = FirebaseAuth.getInstance()
+    var db = Firebase.firestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +55,30 @@ class SignUpPageActivity : AppCompatActivity() {
                             if (task.isSuccessful) {
                                 Toast.makeText(this, "Account Created",
                                     Toast.LENGTH_SHORT).show()
+
+                                val user = task.result?.user
+                                val userid = user?.uid
+
+                                val usersCollection = FirebaseFirestore.getInstance()
+                                    .collection("users")
+                                val userDocument = usersCollection.document(userid!!)
+
+                                val fullName = findViewById<EditText>(R.id.fullNameText).text
+                                    .toString()
+
+                                val userDetails = hashMapOf(
+                                    "email" to emailString,
+                                    "fullName" to fullName,
+                                )
+
+                                userDocument.set(userDetails)
+                                    .addOnSuccessListener {
+                                        Log.e("Firestore", "Successful ;P")
+                                    }
+                                    .addOnFailureListener { e ->
+                                        // Handle errors
+                                        Log.e("Firestore", "Error writing document", e)
+                                    }
                             }
                             else{
                                 Toast.makeText(this, "Account Unsuccessful ",
