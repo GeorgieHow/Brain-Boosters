@@ -2,35 +2,10 @@ package com.example.brainboosters
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import com.ismaeldivita.chipnavigation.ChipNavigationBar
 
 class HomePageActivity : AppCompatActivity() {
-/*
-    private var mAuth = FirebaseAuth.getInstance()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        //Home page
-        setContentView(R.layout.home_page)
-
-        val userWelcome = findViewById<TextView>(R.id.userEmailTextView)
-        val user = mAuth.currentUser
-
-        if (user != null){
-            userWelcome.setText("Welcome " + user.email)
-        } else {
-            userWelcome.setText("User does not exist.")
-        }
-
-
-        val logOutButton = findViewById<Button>(R.id.logOutButton)
-        logOutButton.setOnClickListener{
-            mAuth.signOut()
-            finish()
-        }
-
-    }*/
 
     val fragment = HomeFragmentActivity()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +40,12 @@ class HomePageActivity : AppCompatActivity() {
                 }
             }
         }
+
+
+    }
+    fun changeFragment(fragment: Fragment){
+        supportFragmentManager.beginTransaction().replace(R.id.fragmentContainerView, fragment)
+            .commit()
     }
 
     private fun openMainFragment() {

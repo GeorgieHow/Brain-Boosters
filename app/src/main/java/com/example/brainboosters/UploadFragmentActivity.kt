@@ -6,22 +6,21 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentTransaction
 
-class GalleryFragmentActivity : Fragment() {
+class UploadFragmentActivity : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View?
-            = inflater.inflate(R.layout.gallery_fragment, container, false).apply {
+            = inflater.inflate(R.layout.upload_fragment, container, false).apply {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val uploadButton = view.findViewById<Button>(R.id.upload_button)
-        val uploadFragment = UploadFragmentActivity()
-        uploadButton.setOnClickListener {
-            (activity as HomePageActivity).changeFragment(uploadFragment)
+        val backButton = view.findViewById<Button>(R.id.back_button)
+        val galleryFragment = GalleryFragmentActivity()
+        backButton.setOnClickListener {
+            (activity as HomePageActivity).changeFragment(galleryFragment)
         }
     }
 }

@@ -38,5 +38,21 @@
             app:layout_constraintTop_toBottomOf="@id/gallery_title"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
+        <Button
+            android:id="@+id/upload_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="30dp"
+            android:padding="25dp"
+            android:text="Upload"
+            android:textSize="18dp"
+            android:background="@color/primaryColor"
+            app:layout_constraintTop_toTopOf="@id/gallery_menu"
+            app:layout_constraintStart_toStartOf="@id/gallery_menu"
+            app:layout_constraintEnd_toEndOf="@id/gallery_menu"
+            app:layout_constraintWidth_percent="0.60"
+
+            />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>
