@@ -93,7 +93,8 @@ class UploadFragmentActivity : Fragment() {
                         val uid = mAuth.currentUser?.uid
                         val uriString: String = uri.toString()
 
-                        val photoName = view?.findViewById<EditText>(R.id.photo_name_edit_text).toString()
+                        val photoEditText = view?.findViewById<EditText>(R.id.photo_name_edit_text)
+                        val photoName = photoEditText?.text.toString()
 
                         val imageDetails = hashMapOf(
                             "name" to photoName,
