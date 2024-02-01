@@ -59,6 +59,11 @@ dependencies {
     //Firebase Firestore Database
     implementation ("com.google.firebase:firebase-firestore-ktx")
 
+    //Glide
+    implementation ("com.github.bumptech.glide:glide:4.12.0")
+    implementation("com.google.firebase:firebase-storage:20.3.0")
+    annotationProcessor ("com.github.bumptech.glide:compiler:4.12.0")
+
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.activity:activity-compose:1.8.2")

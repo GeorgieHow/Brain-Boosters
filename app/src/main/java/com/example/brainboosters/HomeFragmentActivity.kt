@@ -18,9 +18,6 @@ class HomeFragmentActivity : Fragment() {
     val db = FirebaseFirestore.getInstance()
 
 
-
-
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View?
