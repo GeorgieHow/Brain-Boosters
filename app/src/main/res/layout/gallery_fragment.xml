@@ -50,9 +50,17 @@
             app:layout_constraintTop_toTopOf="@id/gallery_menu"
             app:layout_constraintStart_toStartOf="@id/gallery_menu"
             app:layout_constraintEnd_toEndOf="@id/gallery_menu"
-            app:layout_constraintWidth_percent="0.60"
+            app:layout_constraintWidth_percent="0.60" />
 
-            />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/picture_recycler_view"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="20dp"
+            app:layout_constraintTop_toBottomOf="@id/upload_button"
+            app:layout_constraintBottom_toBottomOf="@id/gallery_menu"
+            app:layout_constraintEnd_toEndOf="@id/gallery_menu"
+            app:layout_constraintStart_toStartOf="@id/gallery_menu" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>
