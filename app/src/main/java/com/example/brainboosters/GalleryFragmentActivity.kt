@@ -10,6 +10,7 @@ import android.widget.Button
 import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -42,7 +43,8 @@ class GalleryFragmentActivity : Fragment() {
 
         val adapter = GalleryPictureAdapter(requireContext(), imageList)
 
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        val layoutManager = GridLayoutManager(requireContext(), 3)
+        recyclerView.layoutManager = layoutManager
         recyclerView.adapter = adapter
 
         val currentUserID = mAuth.currentUser?.uid
