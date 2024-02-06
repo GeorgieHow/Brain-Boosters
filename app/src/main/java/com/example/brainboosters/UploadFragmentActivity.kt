@@ -13,6 +13,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -23,7 +24,7 @@ class UploadFragmentActivity : Fragment() {
 
     private lateinit var choosePictureButton: Button
     private lateinit var uploadButton: Button
-    private lateinit var editFileName: EditText
+    private lateinit var editFileName: TextInputEditText
     private lateinit var pictureImageView: ImageView
     private lateinit var imageUri: Uri
 

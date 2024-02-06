@@ -23,10 +23,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".LoginPageActivity">
+        <activity android:name=".LoginPageActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
 
         </activity>
-        <activity android:name=".SignUpPageActivity">
+        <activity android:name=".SignUpPageActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
 
         </activity>
         <activity android:name=".HomePageActivity">
