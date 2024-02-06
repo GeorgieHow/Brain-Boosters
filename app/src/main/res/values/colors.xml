@@ -28,6 +28,7 @@
 
     <color name="surfaceColor">#f7fbf1</color>
     <color name="inverseSurfaceColor">#2d322c</color>
+    <color name="surfaceDimColor">#d8dbd2</color>
 
 
 

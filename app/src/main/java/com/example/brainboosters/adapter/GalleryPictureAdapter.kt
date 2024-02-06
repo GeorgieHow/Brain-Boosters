@@ -17,7 +17,7 @@ class GalleryPictureAdapter(private val context: Context, private val pictureLis
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageView: ImageView = itemView.findViewById(R.id.picture_image_view)
-        val pictureNameTextView: TextView = itemView.findViewById(R.id.picture_name_text_view)
+        //val pictureNameTextView: TextView = itemView.findViewById(R.id.picture_name_text_view)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -36,6 +36,6 @@ class GalleryPictureAdapter(private val context: Context, private val pictureLis
         Glide.with(context)
             .load(imageModel.imageUrl)
             .into(holder.imageView)
-        holder.pictureNameTextView.text = imageModel.imageName
+        //holder.pictureNameTextView.text = imageModel.imageName
     }
 }
