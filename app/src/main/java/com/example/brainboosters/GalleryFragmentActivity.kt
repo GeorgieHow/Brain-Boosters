@@ -82,14 +82,22 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
             .addOnSuccessListener { documentSnapshot ->
                 val imageUrl = documentSnapshot.getString("imageUrl")
                 val imageName = documentSnapshot.getString("name")
+                val imageYear = documentSnapshot.getLong("year").toString()
+                val imagePlace = documentSnapshot.getString("place")
 
                 // Create a new fragment instance with the selected picture data
                 val detailFragment = imageUrl?.let {
                     if (imageName != null) {
-                        PictureFragmentActivity.newInstance(
-                            it,
-                            imageName
-                        )
+                        if (imageYear != null) {
+                            PictureFragmentActivity.newInstance(
+                                it,
+                                imageName,
+                                imageYear,
+                                imagePlace
+                            )
+                        } else {
+                            GalleryFragmentActivity()
+                        }
                     } else {
                         // Provide a default fragment instance if imageName is null
                         GalleryFragmentActivity()
