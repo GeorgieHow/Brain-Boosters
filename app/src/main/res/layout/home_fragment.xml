@@ -59,6 +59,19 @@
             app:layout_constraintStart_toStartOf="@id/welcome_message"/>
 
         <Button
+            android:id="@+id/start_quiz_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="30sp"
+            android:padding="25dp"
+            android:text="Start Quiz"
+            android:background="@color/primaryColor"
+            app:layout_constraintStart_toStartOf="@id/home_menu"
+            app:layout_constraintTop_toBottomOf="@id/user_fullname"
+            app:layout_constraintEnd_toEndOf="@id/home_menu"
+            />
+
+        <Button
             android:id="@+id/log_out_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

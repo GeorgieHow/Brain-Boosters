@@ -46,6 +46,11 @@ class HomeFragmentActivity : Fragment() {
             }
         }
 
+        val startQuizButton = findViewById<Button>(R.id.start_quiz_button)
+        val quizImageSelection = QuizImageSelectionActivity()
+        startQuizButton.setOnClickListener {
+            (activity as HomePageActivity).changeFragment(quizImageSelection)
+        }
 
 
         //Log-Out Button Functionality, Signs out user and takes them back to the welcome page
