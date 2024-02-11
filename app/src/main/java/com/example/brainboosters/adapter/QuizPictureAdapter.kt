@@ -56,4 +56,10 @@ class QuizPictureAdapter(
     }
 
     override fun getItemCount(): Int = pictures.size
+
+    fun getSelectedPictures(): List<PictureModel>{
+        return selectedPositions.map {
+            position -> pictures[position]
+        }
+    }
 }

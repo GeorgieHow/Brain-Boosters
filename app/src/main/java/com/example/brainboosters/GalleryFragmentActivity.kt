@@ -53,9 +53,13 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
                     val imageUrl = document.getString("imageUrl")
                     val pictureId = document.id
                     val imageName = document.getString("name")
+                    val imagePlace = document.getString("place")
+                    val imagePerson = document.getString("person")
+                    val imageYear = document.getLong("year")?.toInt()
 
                     if (imageUrl != null) {
-                        imageName?.let { PictureModel(imageUrl, it, pictureId) }
+                        imageName?.let { PictureModel(imageUrl, it, pictureId, imagePerson,
+                            imagePlace, imageYear) }
                             ?.let { imageList.add(it) }
                     }
                 }
@@ -76,37 +80,39 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
 
         Log.d("Firebase", "$selectedPicture, and the id? $selectedPictureID" )
 
-        db.collection("images")
-            .document(selectedPictureID)
-            .get()
-            .addOnSuccessListener { documentSnapshot ->
-                val imageUrl = documentSnapshot.getString("imageUrl")
-                val imageName = documentSnapshot.getString("name")
-                val imageYear = documentSnapshot.getLong("year").toString()
-                val imagePlace = documentSnapshot.getString("place")
+        if (selectedPictureID != null) {
+            db.collection("images")
+                .document(selectedPictureID)
+                .get()
+                .addOnSuccessListener { documentSnapshot ->
+                    val imageUrl = documentSnapshot.getString("imageUrl")
+                    val imageName = documentSnapshot.getString("name")
+                    val imageYear = documentSnapshot.getLong("year").toString()
+                    val imagePlace = documentSnapshot.getString("place")
 
-                // Create a new fragment instance with the selected picture data
-                val detailFragment = imageUrl?.let {
-                    if (imageName != null) {
-                        if (imageYear != null) {
-                            PictureFragmentActivity.newInstance(
-                                it,
-                                imageName,
-                                imageYear,
-                                imagePlace
-                            )
+                    // Create a new fragment instance with the selected picture data
+                    val detailFragment = imageUrl?.let {
+                        if (imageName != null) {
+                            if (imageYear != null) {
+                                PictureFragmentActivity.newInstance(
+                                    it,
+                                    imageName,
+                                    imageYear,
+                                    imagePlace
+                                )
+                            } else {
+                                GalleryFragmentActivity()
+                            }
                         } else {
+                            // Provide a default fragment instance if imageName is null
                             GalleryFragmentActivity()
                         }
-                    } else {
-                        // Provide a default fragment instance if imageName is null
-                        GalleryFragmentActivity()
-                    }
-                } ?: GalleryFragmentActivity()
+                    } ?: GalleryFragmentActivity()
 
-                // Replace the current fragment with the detail fragment
-                (activity as HomePageActivity).changeFragment(detailFragment)
-            }
+                    // Replace the current fragment with the detail fragment
+                    (activity as HomePageActivity).changeFragment(detailFragment)
+                }
+        }
     }
 
 }

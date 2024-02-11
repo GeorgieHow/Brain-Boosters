@@ -1,12 +1,14 @@
 package com.example.brainboosters
 
 import android.content.ContentValues.TAG
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.GridView
+import android.widget.Button
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,6 +19,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 class QuizImageSelectionActivity : Fragment(){
 
     private lateinit var recyclerViewImages: RecyclerView
+    private val picturesList = mutableListOf<PictureModel>()
+    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -39,9 +43,35 @@ class QuizImageSelectionActivity : Fragment(){
         return view
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val backButton = view.findViewById<Button>(R.id.back_button)
+        val homePage = HomeFragmentActivity()
+        backButton.setOnClickListener {
+            (activity as HomePageActivity).changeFragment(homePage)
+        }
+
+        val startQuizButton = view.findViewById<Button>(R.id.start_quiz_button)
+        startQuizButton.setOnClickListener {
+            val adapter = recyclerViewImages.adapter as QuizPictureAdapter
+            val selectedPictures = adapter.getSelectedPictures()
+
+            if (selectedPictures.isNotEmpty()){
+                val intent = Intent(context, QuizActivity::class.java).apply {
+                    putParcelableArrayListExtra("selectedPictures", ArrayList(selectedPictures))
+                }
+                startActivity(intent)
+            }
+            else{
+                Toast.makeText(context, "Must pick at least 1 picture for the quiz",
+                    Toast.LENGTH_SHORT).show()
+            }
+
+        }
+    }
+
     fun fetchPicturesFromFirestore(completion: (List<PictureModel>) -> Unit) {
-        val db = FirebaseFirestore.getInstance()
-        val picturesList = mutableListOf<PictureModel>()
 
         db.collection("images").get()
             .addOnSuccessListener { documents ->
@@ -49,12 +79,14 @@ class QuizImageSelectionActivity : Fragment(){
                     val imageUrl = document.getString("imageUrl")
                     val pictureId = document.id
                     val imageName = document.getString("name")
+                    val imagePlace = document.getString("place")
+                    val imagePerson = document.getString("person")
+                    val imageYear = document.getLong("year")?.toInt()
 
-                    val picture = imageName?.let {
-                        if (imageUrl != null) {
-                            val picture = PictureModel(imageUrl, it, pictureId)
-                            picturesList.add(picture)
-                        }
+                    if (imageUrl != null) {
+                        imageName?.let { PictureModel(imageUrl, it, pictureId, imagePerson,
+                            imagePlace, imageYear) }
+                            ?.let { picturesList.add(it) }
                     }
                 }
                 completion(picturesList)
