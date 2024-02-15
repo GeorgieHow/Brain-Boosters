@@ -4,34 +4,101 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:background="@color/surfaceColor">
 
     <TextView
-        android:id="@+id/quiz_title"
-        android:layout_width="match_parent"
+        android:id="@+id/question_title"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAlignment="center"
-        android:text="Quiz"
-        android:textSize="60sp"
+        android:text="Question"
+        android:textSize="50sp"
+        android:textColor="@color/inverseSurfaceColor"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 
-    <TextView
-        android:id="@+id/no_of_pics_picked"
+    <Button
+        android:id="@+id/text_to_speech_button"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="1"
-        android:textSize="60sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/quiz_title"/>
+        android:layout_height="0dp"
+        android:background="@drawable/volume"
+        app:layout_constraintStart_toEndOf="@+id/question_title"
+        app:layout_constraintTop_toTopOf="@id/question_title"
+        app:layout_constraintBottom_toBottomOf="@id/question_title"
+        />
 
-    <TextView
-        android:id="@+id/pic_2_test"
+    <ImageView
+        android:id="@+id/picture_image_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="10dp"
+        android:adjustViewBounds="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/question_title"
+        app:layout_constraintBottom_toTopOf="@id/answer_1_button"/>
+
+    <Button
+        android:id="@+id/answer_1_button"
+        android:layout_width="0dp"
+        android:layout_height="70dp"
+        android:layout_margin="10dp"
+        android:text="answer1"
+        android:textSize="30sp"
+        android:textColor="@color/inverseSurfaceColor"
+        android:background="@drawable/quiz_answer_outline_default"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/guideline"
+        app:layout_constraintBottom_toTopOf="@id/answer_3_button"/>
+
+    <Button
+        android:id="@+id/answer_2_button"
+        android:layout_width="0dp"
+        android:layout_height="70dp"
+        android:layout_margin="10dp"
+        android:text="answer2"
+        android:textSize="30sp"
+        android:textColor="@color/inverseSurfaceColor"
+        android:background="@drawable/quiz_answer_outline_default"
+        app:layout_constraintStart_toEndOf="@id/guideline"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/answer_4_button"/>
+
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="2"
-        android:textSize="60sp"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5" />
+
+    <Button
+        android:id="@+id/answer_3_button"
+        android:layout_width="0dp"
+        android:layout_height="70dp"
+        android:layout_margin="10dp"
+        android:text="answer3"
+        android:textSize="30sp"
+        android:textColor="@color/inverseSurfaceColor"
+        android:background="@drawable/quiz_answer_outline_default"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/no_of_pics_picked"/>
+        app:layout_constraintEnd_toStartOf="@id/guideline"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <Button
+        android:id="@+id/answer_4_button"
+        android:layout_width="0dp"
+        android:layout_height="70dp"
+        android:layout_margin="10dp"
+        android:text="answer4"
+        android:textSize="30sp"
+        android:textColor="@color/inverseSurfaceColor"
+        android:background="@drawable/quiz_answer_outline_default"
+        app:layout_constraintStart_toEndOf="@id/guideline"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
