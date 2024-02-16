@@ -30,6 +30,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private lateinit var textToSpeech: TextToSpeech
     private var isTTSInitialized = false
     private lateinit var questionTitle: TextView
+    private var questionsRight = 0
+    private var questionsWrong = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -66,7 +68,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     button.setBackgroundResource(R.drawable.quiz_answer_outline_correct)
                     val color = ContextCompat.getColor(this, R.color.surfaceColor)
                     button.setTextColor(color)
-                    // Handle correct answer (e.g., load next question)
+
+                    questionsRight++
                 } else {
                     button.setBackgroundResource(R.drawable.quiz_answer_outline_wrong)
                     val color = ContextCompat.getColor(this, R.color.surfaceColor)
@@ -74,8 +77,10 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     // Optionally, find the correct button and color it green
                     answerButtons.firstOrNull { it.text == questions[currentQuestionIndex].correctAnswer }?.apply {
                         setBackgroundResource(R.drawable.quiz_answer_outline_correct)
-                        setTextColor(ContextCompat.getColor(context, R.color.white)) // Assuming you have white defined in your colors.xml
+                        setTextColor(ContextCompat.getColor(context, R.color.white))
                     }
+
+                    questionsWrong++
                 }
 
                 goToNextQuestion()
@@ -83,8 +88,9 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
-    fun getQuestions(selectedPictures: List<PictureModel>): List<Question> {
+    private fun getQuestions(selectedPictures: List<PictureModel>): List<Question> {
 
+        //If only one picture is picked
         if (selectedPictures.size == 1){
             return listOf(
                 Question("Where was this taken?", listOf("Option 1", "Option 2",
@@ -99,20 +105,43 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     selectedPictures[0]),
             )
         }
-        else{
-            return listOf(
-                Question("Where was this taken?", listOf("Option 1", "Option 2",
-                    "Option 3", selectedPictures[0].imagePlace), selectedPictures[0].imagePlace,
-                    selectedPictures[0]),
-                Question("What year was this taken?", listOf("Option 1", "Option 2",
-                    "Option 3", selectedPictures[1].imageYear.toString()),
-                    selectedPictures[1].imageYear.toString(),
-                    selectedPictures[1]),
-            )
+        //If multiple pictures ate picked
+        else {
+            val allQuestions = mutableListOf<Question>()
+            val minimumQuestions = 5
+            var questionCount = 0
+
+            while (questionCount < minimumQuestions) {
+                selectedPictures.forEach { picture ->
+                    if (questionCount < minimumQuestions) {
+                        val questionsForPicture = listOf(
+                            Question("Where was this taken?",
+                                listOf("Option 1", "Option 2", "Option 3", picture.imagePlace),
+                                picture.imagePlace, picture),
+                            Question("What year was this taken?",
+                                listOf("Option 1", "Option 2", "Option 3",
+                                    picture.imageYear.toString()), picture.imageYear.toString(),
+                                picture),
+                            Question("Who is in this photo?",
+                                listOf("Option 1", "Option 2", "Option 3", picture.imagePerson),
+                                picture.imagePerson, picture)
+                        )
+                        // Randomly select a question from the list for each picture
+                        allQuestions.add(questionsForPicture.random())
+                        questionCount++
+                    }
+                }
+            }
+
+            // Shuffle the list to ensure randomness in question order
+            allQuestions.shuffle()
+
+            // If you end up with more questions than needed due to the loop, trim the list to the desired size
+            return if (allQuestions.size > minimumQuestions) allQuestions.take(minimumQuestions) else allQuestions
         }
     }
 
-    fun goToNextQuestion() {
+    private fun goToNextQuestion() {
         // Check if more questions are available
         if (currentQuestionIndex + 1 < questions.size) {
             currentQuestionIndex++ // Increment the question index
@@ -122,12 +151,12 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         } else {
             // Handle the case where there are no more questions (e.g., show results or restart the quiz)
-            Toast.makeText(this, "You've reached the end of the quiz!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "You've reached the end of the quiz! You got $questionsRight right and $questionsWrong wrong", Toast.LENGTH_SHORT).show()
         }
     }
 
 
-    fun loadQuestion(){
+    private fun loadQuestion(){
         if (currentQuestionIndex < questions.size) {
             val question = questions[currentQuestionIndex]
 
