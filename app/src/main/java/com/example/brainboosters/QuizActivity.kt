@@ -1,5 +1,6 @@
 package com.example.brainboosters
 
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -8,12 +9,17 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.Target
 import com.example.brainboosters.model.PictureModel
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.widget.Toast
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.example.brainboosters.accessibility.AccessibleZoomImageView
 import java.util.Locale
 import kotlinx.coroutines.*
+import javax.sql.DataSource
 
 //Questions up here
 data class Question(
@@ -164,13 +170,42 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             questionTitle.text = question.questionText
 
             //Question Picture
-            val pictureImageView = findViewById<ImageView>(R.id.picture_image_view)
+            val pictureImageView = findViewById<AccessibleZoomImageView>(R.id.picture_image_view)
+
 
             Glide.with(this)
                 .load(question.pictureModel.imageUrl)
+                .listener(object : RequestListener<Drawable> {
+
+                    override fun onLoadFailed(
+                        e: GlideException?,
+                        model: Any?,
+                        target: Target<Drawable>?,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        return false
+                    }
+
+                    override fun onResourceReady(
+                        resource: Drawable?,
+                        model: Any?,
+                        target: Target<Drawable>?,
+                        dataSource: com.bumptech.glide.load.DataSource?,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        // This is called when the image is ready. Perform your actions here.
+                        pictureImageView.post {
+                            if (pictureImageView is AccessibleZoomImageView) {
+                                pictureImageView.resetZoom()
+                            }
+                        }
+                        return false
+                    }
+                })
                 .into(pictureImageView)
 
             resetButtonColors()
+
 
             val shuffledAnswers = question.options.shuffled()
 

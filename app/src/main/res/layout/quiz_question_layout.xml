@@ -24,19 +24,36 @@
         android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:background="@drawable/volume"
+        android:contentDescription="Question Reader"
         app:layout_constraintStart_toEndOf="@+id/question_title"
         app:layout_constraintTop_toTopOf="@id/question_title"
         app:layout_constraintBottom_toBottomOf="@id/question_title"
         />
 
-    <ImageView
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/image_view_left_guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.25" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/image_view_right_guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.75" />
+
+
+    <com.example.brainboosters.accessibility.AccessibleZoomImageView
         android:id="@+id/picture_image_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="10dp"
-        android:adjustViewBounds="true"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+
+        android:background="@android:color/transparent"
+        app:layout_constraintStart_toStartOf="@id/image_view_left_guideline"
+        app:layout_constraintEnd_toEndOf="@id/image_view_right_guideline"
         app:layout_constraintTop_toBottomOf="@id/question_title"
         app:layout_constraintBottom_toTopOf="@id/answer_1_button"/>
 
