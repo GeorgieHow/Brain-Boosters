@@ -13,7 +13,9 @@ import com.bumptech.glide.request.target.Target
 import com.example.brainboosters.model.PictureModel
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import android.view.LayoutInflater
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.example.brainboosters.accessibility.AccessibleZoomImageView
@@ -33,11 +35,17 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private lateinit var questions: List<Question>
     private var currentQuestionIndex = 0
+
     private lateinit var textToSpeech: TextToSpeech
     private var isTTSInitialized = false
+
     private lateinit var questionTitle: TextView
+
     private var questionsRight = 0
     private var questionsWrong = 0
+
+    private var correctAnswersCountMap: MutableMap<String, Int> = mutableMapOf()
+    private var incorrectAnswersCountMap: MutableMap<String, Int> = mutableMapOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -60,36 +68,16 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             speakOut(questionTitle.text.toString())
         }
 
-        val answerButtons = listOf(
-            findViewById<Button>(R.id.answer_1_button),
-            findViewById<Button>(R.id.answer_2_button),
-            findViewById<Button>(R.id.answer_3_button),
-            findViewById<Button>(R.id.answer_4_button)
-        )
+        val answerButtons = getListOfButtons()
 
         answerButtons.forEachIndexed { index, button ->
             button.setOnClickListener {
                 val selectedAnswer = button.text.toString()
-                if (selectedAnswer == questions[currentQuestionIndex].correctAnswer) {
-                    button.setBackgroundResource(R.drawable.quiz_answer_outline_correct)
-                    val color = ContextCompat.getColor(this, R.color.surfaceColor)
-                    button.setTextColor(color)
-
-                    questionsRight++
-                } else {
-                    button.setBackgroundResource(R.drawable.quiz_answer_outline_wrong)
-                    val color = ContextCompat.getColor(this, R.color.surfaceColor)
-                    button.setTextColor(color)
-                    // Optionally, find the correct button and color it green
-                    answerButtons.firstOrNull { it.text == questions[currentQuestionIndex].correctAnswer }?.apply {
-                        setBackgroundResource(R.drawable.quiz_answer_outline_correct)
-                        setTextColor(ContextCompat.getColor(context, R.color.white))
+                showAnswerPreviewDialog(selectedAnswer) { confirmSelection ->
+                    if (confirmSelection) {
+                        evaluateAnswer(selectedAnswer, button)
                     }
-
-                    questionsWrong++
                 }
-
-                goToNextQuestion()
             }
         }
     }
@@ -152,12 +140,18 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (currentQuestionIndex + 1 < questions.size) {
             currentQuestionIndex++ // Increment the question index
             GlobalScope.launch(Dispatchers.Main) {
-                delay(3000L)
+                delay(5000L)
                 loadQuestion() // Load the next question
             }
         } else {
             // Handle the case where there are no more questions (e.g., show results or restart the quiz)
             Toast.makeText(this, "You've reached the end of the quiz! You got $questionsRight right and $questionsWrong wrong", Toast.LENGTH_SHORT).show()
+            correctAnswersCountMap.forEach { (imageUrl, count) ->
+                Log.d("QuizResults", "Image $imageUrl got $count correct answers.")
+            }
+            incorrectAnswersCountMap.forEach { (imageUrl, count) ->
+                Log.d("QuizResults", "Image $imageUrl got $count incorrect answers.")
+            }
         }
     }
 
@@ -222,12 +216,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun resetButtonColors() {
-        val buttons = listOf(
-            findViewById<Button>(R.id.answer_1_button),
-            findViewById<Button>(R.id.answer_2_button),
-            findViewById<Button>(R.id.answer_3_button),
-            findViewById<Button>(R.id.answer_4_button)
-        )
+        val buttons = getListOfButtons()
 
         buttons.forEach { button ->
             val defaultQuizButton = ContextCompat.getDrawable(this, R.drawable.quiz_answer_outline_default)
@@ -237,6 +226,86 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
     }
+
+    private fun showAnswerPreviewDialog(answer: String, onConfirmSelection: (Boolean) -> Unit) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.confirm_answer_popup, null)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false) // Prevent dialog from getting dismissed by back press or outside touch
+            .create()
+
+        val answerText = dialogView.findViewById<TextView>(R.id.preview_answer_text)
+        val selectAnswerButton = dialogView.findViewById<Button>(R.id.select_answer_button)
+        val goBackButton = dialogView.findViewById<Button>(R.id.go_back_button)
+
+        answerText.text = answer
+
+        // Use TTS to read out the answer
+        speakOut(answer)
+
+        selectAnswerButton.setOnClickListener {
+            onConfirmSelection(true)
+            dialog.dismiss()
+        }
+
+        goBackButton.setOnClickListener {
+            onConfirmSelection(false)
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private fun evaluateAnswer(selectedAnswer: String, button: Button) {
+        val currentQuestion = questions[currentQuestionIndex]
+
+        val answerButtons = getListOfButtons()
+
+        if (selectedAnswer == currentQuestion.correctAnswer) {
+            //Changes button green
+            button.setBackgroundResource(R.drawable.quiz_answer_outline_correct)
+            val color = ContextCompat.getColor(this, R.color.surfaceColor)
+            button.setTextColor(color)
+
+            questionsRight++
+
+            // Increment the correct answer count for the current PictureModel
+            val currentCount = correctAnswersCountMap[currentQuestion.pictureModel.imageUrl] ?: 0
+            correctAnswersCountMap[currentQuestion.pictureModel.imageUrl!!] = currentCount + 1
+
+        } else {
+            //Changes button red
+            button.setBackgroundResource(R.drawable.quiz_answer_outline_wrong)
+            val color = ContextCompat.getColor(this, R.color.surfaceColor)
+            button.setTextColor(color)
+
+            //Changes button with right answer green
+            answerButtons.find { it.text == currentQuestion.correctAnswer }?.let { button ->
+                button.setBackgroundResource(R.drawable.quiz_answer_outline_correct)
+                val color = ContextCompat.getColor(this, R.color.surfaceColor)
+                button.setTextColor(color)
+            }
+
+            questionsWrong++
+
+            val currentCount = incorrectAnswersCountMap[currentQuestion.pictureModel.imageUrl] ?: 0
+            incorrectAnswersCountMap[currentQuestion.pictureModel.imageUrl!!] = currentCount + 1
+        }
+
+        goToNextQuestion()
+    }
+
+    private fun getListOfButtons(): List<Button> {
+        return listOf(
+            findViewById<Button>(R.id.answer_1_button),
+            findViewById<Button>(R.id.answer_2_button),
+            findViewById<Button>(R.id.answer_3_button),
+            findViewById<Button>(R.id.answer_4_button)
+        )
+    }
+
+
+    //TEXT TO SPEECH METHODS BELOW
     private fun speakOut(text: String) {
         textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
     }
@@ -270,6 +339,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
         super.onDestroy()
     }
+
 
     //Method for hiding system UI
     private fun hideSystemUI() {
