@@ -55,6 +55,11 @@
             android:screenOrientation="landscape">
 
         </activity>
+        <activity android:name=".QuizResultsActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
+
+        </activity>
     </application>
 
 </manifest>

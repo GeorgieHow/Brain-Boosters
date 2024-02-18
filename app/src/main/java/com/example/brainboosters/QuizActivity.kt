@@ -1,5 +1,6 @@
 package com.example.brainboosters
 
+import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
@@ -152,6 +153,13 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             incorrectAnswersCountMap.forEach { (imageUrl, count) ->
                 Log.d("QuizResults", "Image $imageUrl got $count incorrect answers.")
             }
+
+            val intent = Intent(this, QuizResultsActivity::class.java).apply{
+                putExtra("questionsRight", questionsRight)
+                putExtra("questionsWrong", questionsWrong)
+            }
+            startActivity(intent)
+            finish()
         }
     }
 
@@ -210,8 +218,6 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             findViewById<Button>(R.id.answer_4_button).text = shuffledAnswers[3]
 
 
-        } else {
-            // End of the quiz
         }
     }
 
@@ -320,6 +326,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             } else {
                 // Speak out a message as soon as the TTS engine is initialized successfully
                 speakOut("Text to speech enabled.")
+                isTTSInitialized = true
                 //speakOut(questionTitle.text.toString())
                 Log.d("Working", "Boy what the hell boy")
             }
