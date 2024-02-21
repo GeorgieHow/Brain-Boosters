@@ -20,6 +20,7 @@ import androidx.appcompat.app.AlertDialog
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.example.brainboosters.accessibility.AccessibleZoomImageView
+import com.google.gson.Gson
 import java.util.Locale
 import kotlinx.coroutines.*
 import javax.sql.DataSource
@@ -33,6 +34,8 @@ data class Question(
 )
 
 class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
+
+    private lateinit var selectedPictures: List<PictureModel>
 
     private lateinit var questions: List<Question>
     private var currentQuestionIndex = 0
@@ -58,7 +61,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         textToSpeech = TextToSpeech(this, this)
 
-        val selectedPictures: List<PictureModel> = intent
+        selectedPictures = intent
             .getParcelableArrayListExtra<PictureModel>("selectedPictures")
             ?: arrayListOf<PictureModel>()
         questions = getQuestions(selectedPictures)
@@ -154,9 +157,22 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 Log.d("QuizResults", "Image $imageUrl got $count incorrect answers.")
             }
 
+
+            //relevant to results page, what I am parsing through
+            val gson = Gson()
+
+            val correctAnswerJson = gson.toJson(correctAnswersCountMap)
+            val incorrectAnswerJson = gson.toJson(incorrectAnswersCountMap)
+
             val intent = Intent(this, QuizResultsActivity::class.java).apply{
                 putExtra("questionsRight", questionsRight)
                 putExtra("questionsWrong", questionsWrong)
+
+                putExtra("correctAnswerJson", correctAnswerJson)
+                putExtra("incorrectAnswerJson", incorrectAnswerJson)
+
+                putParcelableArrayListExtra("selectedPictures", ArrayList(selectedPictures))
+
             }
             startActivity(intent)
             finish()
