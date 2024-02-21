@@ -8,11 +8,9 @@ import com.example.brainboosters.model.PictureModel
 import com.google.common.reflect.TypeToken
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.properties.Delegates
 
 class QuizResultsActivity : AppCompatActivity(){
 
@@ -43,17 +41,6 @@ class QuizResultsActivity : AppCompatActivity(){
         questionsRightTextView.text = questionsRight.toString()
         questionsWrongTextView.text = questionsWrong.toString()
 
-        //MutableMaps here, use to assign these to pictures in database
-        val correctAnswersMap  = object : TypeToken<MutableMap<String, Int>>() {}.type
-        val incorrectAnswersMap  = object : TypeToken<MutableMap<String, Int>>() {}.type
-
-        val correctAnswersCountMap: MutableMap<String, Int> = gson.fromJson(
-            intent.getStringExtra("correctAnswersMap"), correctAnswersMap
-        ) ?: mutableMapOf()
-
-        val incorrectAnswersCountMap: MutableMap<String, Int> = gson.fromJson(
-            intent.getStringExtra("incorrectAnswersMap"), incorrectAnswersMap
-        ) ?: mutableMapOf()
 
 
         //Array list of photos used
@@ -61,11 +48,18 @@ class QuizResultsActivity : AppCompatActivity(){
             intent.getParcelableArrayListExtra<PictureModel>("selectedPictures")
                 ?: arrayListOf()
 
-        uploadQuizToDB()
+        uploadQuizToDB(object : QuizUploadCallback {
+            override fun onQuizUploaded(quizId: String) {
+                // Assuming selectedPictures contains the image IDs
+                val imageIds = selectedPictures.map { it.documentId}
+                addQuizImageLink(quizId, imageIds)
+            }
+        })
+        updateImageDB()
 
     }
 
-    private fun uploadQuizToDB(){
+    private fun uploadQuizToDB(callback: QuizUploadCallback){
 
         val uid = mAuth.currentUser?.uid
 
@@ -84,15 +78,81 @@ class QuizResultsActivity : AppCompatActivity(){
             "questionsWrong" to questionsWrong
         )
 
-        db.collection("quiz")
+        db.collection("quizzes")
             .add(quizData)
             .addOnSuccessListener { documentReference ->
                 Log.d("QuizResultsActivity", "DocumentSnapshot added with ID: ${documentReference.id}")
+                callback.onQuizUploaded(documentReference.id)
             }
             .addOnFailureListener { e ->
                 Log.w("QuizResultsActivity", "Error adding document", e)
             }
+    }
 
+    private fun updateImageDB() {
+
+        //MutableMaps here, use to assign these to pictures in database
+        val correctAnswersCountMap: MutableMap<String, Int> = gson.fromJson(
+            intent.getStringExtra("correctAnswerJson"), // Corrected key
+            object : TypeToken<MutableMap<String, Int>>() {}.type
+        ) ?: mutableMapOf()
+
+        val incorrectAnswersCountMap: MutableMap<String, Int> = gson.fromJson(
+            intent.getStringExtra("incorrectAnswerJson"), // Corrected key
+            object : TypeToken<MutableMap<String, Int>>() {}.type
+        ) ?: mutableMapOf()
+
+        correctAnswersCountMap.forEach { (imageUrl, count) ->
+            Log.d("QuizResultsTwo", "Image $imageUrl got $count correct answers.")
+        }
+        incorrectAnswersCountMap.forEach { (imageUrl, count) ->
+            Log.d("QuizResultsTwo", "Image $imageUrl got $count incorrect answers.")
+        }
+
+        // Assume db is your Firebase Firestore instance
+        correctAnswersCountMap.forEach { (documentID, correctCount) ->
+            val imageRef = db.collection("images").document(documentID)
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(imageRef)
+                val currentCorrectCount = snapshot.getLong("correctCount") ?: 0
+                transaction.update(imageRef, "correctCount", currentCorrectCount + correctCount)
+            }.addOnSuccessListener {
+                Log.d("QuizResultsActivity", "Transaction success: Correct count updated for $documentID")
+            }.addOnFailureListener { e ->
+                Log.w("QuizResultsActivity", "Transaction failure.", e)
+            }
+        }
+
+        incorrectAnswersCountMap.forEach { (documentID, incorrectCount) ->
+            val imageRef = db.collection("images").document(documentID)
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(imageRef)
+                val currentIncorrectCount = snapshot.getLong("incorrectCount") ?: 0
+                transaction.update(imageRef, "incorrectCount", currentIncorrectCount + incorrectCount)
+            }.addOnSuccessListener {
+                Log.d("QuizResultsActivity", "Transaction success: Incorrect count updated for $documentID")
+            }.addOnFailureListener { e ->
+                Log.w("QuizResultsActivity", "Transaction failure.", e)
+            }
+        }
+    }
+
+    private fun addQuizImageLink(quizId: String, imageIds: List<String?>) {
+        imageIds.forEach { imageId ->
+            val link = hashMapOf("quizId" to quizId, "imageId" to imageId)
+            db.collection("quizImageLinks").add(link)
+                .addOnSuccessListener {
+                    Log.d("QuizResultsActivity", "Link added between quiz $quizId and image $imageId")
+                }
+                .addOnFailureListener { e ->
+                    Log.w("QuizResultsActivity", "Error adding quiz-image link", e)
+                }
+        }
+    }
+
+
+    interface QuizUploadCallback {
+        fun onQuizUploaded(quizId: String)
     }
 
     private fun getRandMessage(): String{

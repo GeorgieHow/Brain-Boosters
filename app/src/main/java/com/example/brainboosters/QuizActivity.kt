@@ -150,11 +150,11 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         } else {
             // Handle the case where there are no more questions (e.g., show results or restart the quiz)
             Toast.makeText(this, "You've reached the end of the quiz! You got $questionsRight right and $questionsWrong wrong", Toast.LENGTH_SHORT).show()
-            correctAnswersCountMap.forEach { (imageUrl, count) ->
-                Log.d("QuizResults", "Image $imageUrl got $count correct answers.")
+            correctAnswersCountMap.forEach { (documentID, count) ->
+                Log.d("QuizResults", "Image $documentID got $count correct answers.")
             }
-            incorrectAnswersCountMap.forEach { (imageUrl, count) ->
-                Log.d("QuizResults", "Image $imageUrl got $count incorrect answers.")
+            incorrectAnswersCountMap.forEach { (documentID, count) ->
+                Log.d("QuizResults", "Image $documentID got $count incorrect answers.")
             }
 
 
@@ -292,8 +292,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             questionsRight++
 
             // Increment the correct answer count for the current PictureModel
-            val currentCount = correctAnswersCountMap[currentQuestion.pictureModel.imageUrl] ?: 0
-            correctAnswersCountMap[currentQuestion.pictureModel.imageUrl!!] = currentCount + 1
+            val currentCount = correctAnswersCountMap[currentQuestion.pictureModel.documentId] ?: 0
+            correctAnswersCountMap[currentQuestion.pictureModel.documentId!!] = currentCount + 1
 
         } else {
             //Changes button red
@@ -310,8 +310,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             questionsWrong++
 
-            val currentCount = incorrectAnswersCountMap[currentQuestion.pictureModel.imageUrl] ?: 0
-            incorrectAnswersCountMap[currentQuestion.pictureModel.imageUrl!!] = currentCount + 1
+            val currentCount = incorrectAnswersCountMap[currentQuestion.pictureModel.documentId] ?: 0
+            incorrectAnswersCountMap[currentQuestion.pictureModel.documentId!!] = currentCount + 1
         }
 
         goToNextQuestion()
