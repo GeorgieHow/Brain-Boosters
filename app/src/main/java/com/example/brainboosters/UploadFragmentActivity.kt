@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.google.android.material.textfield.TextInputEditText
@@ -58,7 +59,14 @@ class UploadFragmentActivity : Fragment() {
 
         val uploadButton = view.findViewById<Button>(R.id.upload_button)
         uploadButton.setOnClickListener {
-            uploadImage(imageUri)
+            if(this::imageUri.isInitialized){
+                uploadImage(imageUri)
+            }
+            else{
+                Toast.makeText(context, "Please select a picture before uploading.",
+                    Toast.LENGTH_SHORT).show()
+            }
+
         }
     }
 
@@ -77,6 +85,41 @@ class UploadFragmentActivity : Fragment() {
     }
 
     private fun uploadImage(uri: Uri) {
+        val photoNameEditText = view?.findViewById<EditText>(R.id.photo_name_edit_text)
+        val photoName = photoNameEditText?.text.toString()
+
+        val photoYearEditText = view?.findViewById<EditText>(R.id.photo_year_edit_text)
+        val photoYear = photoYearEditText?.text.toString()
+
+        val photoWhereEditText = view?.findViewById<EditText>(R.id.photo_where_edit_text)
+        val photoWhere = photoWhereEditText?.text.toString()
+
+        val photoWhoEditText = view?.findViewById<EditText>(R.id.photo_who_edit_text)
+        val photoWho = photoWhoEditText?.text.toString()
+
+        val photoEventEditText = view?.findViewById<EditText>(R.id.photo_event_edit_text)
+        val photoEvent = photoEventEditText?.text.toString()
+
+        if (photoName.isEmpty() || photoWhere.isEmpty() || photoEvent.isEmpty()) {
+            Toast.makeText(context, "All text fields with a * on the end must be filled in.",
+                Toast.LENGTH_SHORT).show()
+            return // Stop the function if validation fails
+        }
+
+        // Check if photoYear is a number and exactly four digits long
+        val photoYearNum: Int? = try {
+            photoYear.toInt()
+        } catch (e: NumberFormatException) {
+            Toast.makeText(context, "Photo year must be a valid four-digit number", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Additional check for the year being exactly four digits, if necessary
+        if (photoYearNum != null && photoYear.length != 4) {
+            Toast.makeText(context, "Photo year must be exactly four digits long", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         if (uri != null){
             val storageReference = storage.reference
 
@@ -94,21 +137,7 @@ class UploadFragmentActivity : Fragment() {
                         val uid = mAuth.currentUser?.uid
                         val uriString: String = uri.toString()
 
-                        val photoNameEditText = view?.findViewById<EditText>(R.id.photo_name_edit_text)
-                        val photoName = photoNameEditText?.text.toString()
 
-                        val photoYearEditText = view?.findViewById<EditText>(R.id.photo_year_edit_text)
-                        val photoYear = photoYearEditText?.text.toString()
-                        val photoYearNum = photoYear.toInt()
-
-                        val photoWhereEditText = view?.findViewById<EditText>(R.id.photo_where_edit_text)
-                        val photoWhere = photoWhereEditText?.text.toString()
-
-                        val photoWhoEditText = view?.findViewById<EditText>(R.id.photo_who_edit_text)
-                        val photoWho = photoWhoEditText?.text.toString()
-
-                        val photoEventEditText = view?.findViewById<EditText>(R.id.photo_event_edit_text)
-                        val photoEvent = photoEventEditText?.text.toString()
 
                         val imageDetails = hashMapOf(
                             "name" to photoName,
