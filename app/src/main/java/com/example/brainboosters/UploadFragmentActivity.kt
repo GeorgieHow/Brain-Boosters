@@ -33,6 +33,7 @@ class UploadFragmentActivity : Fragment() {
     private val storage = FirebaseStorage.getInstance()
 
     private val galleryFragment = GalleryFragmentActivity()
+    private val uploadPart2Fragment = UploadFragmentPart2Activity()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -151,7 +152,7 @@ class UploadFragmentActivity : Fragment() {
                         val imagesCollection = db.collection("images")
                         imagesCollection.add(imageDetails)
 
-                        (activity as HomePageActivity).changeFragment(galleryFragment)
+                        (activity as HomePageActivity).changeFragment(uploadPart2Fragment)
 
                         Log.d("Firestore", "Added Successfully")
 

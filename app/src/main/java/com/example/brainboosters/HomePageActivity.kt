@@ -1,6 +1,7 @@
 package com.example.brainboosters
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.ismaeldivita.chipnavigation.ChipNavigationBar
@@ -8,49 +9,51 @@ import com.ismaeldivita.chipnavigation.ChipNavigationBar
 class HomePageActivity : AppCompatActivity() {
 
     val fragment = HomeFragmentActivity()
+    // Add a flag to track when UploadFragmentPart2 is displayed
+    private var isUploadFragmentPart2Displayed = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.home_page)
         openMainFragment()
 
-        var menu_bottom = findViewById<ChipNavigationBar>(R.id.bottom_nav_bar)
-        menu_bottom.setItemSelected(R.id.nav_home)
+        val menuBottom = findViewById<ChipNavigationBar>(R.id.bottom_nav_bar)
+        menuBottom.setItemSelected(R.id.nav_home)
 
-        menu_bottom.setOnItemSelectedListener {
-            when (it) {
+        menuBottom.setOnItemSelectedListener { itemId ->
+            // Check if trying to navigate away from UploadFragmentPart2
+            if (isUploadFragmentPart2Displayed) {
+                Toast.makeText(this, "Please complete the current process before navigating away", Toast.LENGTH_LONG).show()
 
-                R.id.nav_home -> {
-                    openMainFragment()
-                }
-                R.id.nav_gallery -> {
-                    val favoriteFragment = GalleryFragmentActivity()
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragmentContainerView, favoriteFragment).commit()
-
-                }
-                R.id.nav_statistics -> {
-                    val profileFragment = StatisticsFragment()
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragmentContainerView, profileFragment).commit()
-                }
-                R.id.nav_profile -> {
-                    val profileFragment = ProfileFragment()
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragmentContainerView, profileFragment).commit()
+                menuBottom.setItemSelected(R.id.nav_gallery, true)
+            } else {
+                when (itemId) {
+                    R.id.nav_home -> {
+                        openMainFragment()
+                    }
+                    R.id.nav_gallery -> {
+                        val favoriteFragment = GalleryFragmentActivity()
+                        changeFragment(favoriteFragment)
+                    }
+                    R.id.nav_statistics -> {
+                        val profileFragment = StatisticsFragment()
+                        changeFragment(profileFragment)
+                    }
+                    R.id.nav_profile -> {
+                        val profileFragment = ProfileFragment()
+                        changeFragment(profileFragment)
+                    }
                 }
             }
         }
-
-
     }
-    fun changeFragment(fragment: Fragment){
-        supportFragmentManager.beginTransaction().replace(R.id.fragmentContainerView, fragment)
-            .commit()
+
+    fun changeFragment(fragment: Fragment) {
+        isUploadFragmentPart2Displayed = fragment is UploadFragmentPart2Activity
+        supportFragmentManager.beginTransaction().replace(R.id.fragmentContainerView, fragment).commit()
     }
 
     private fun openMainFragment() {
-        val transaction = supportFragmentManager.beginTransaction()
-        transaction.replace(R.id.fragmentContainerView, fragment)
-        transaction.commit()
+        changeFragment(fragment)
     }
 }
