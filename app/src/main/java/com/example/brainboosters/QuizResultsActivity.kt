@@ -150,7 +150,6 @@ class QuizResultsActivity : AppCompatActivity(){
         }
     }
 
-
     interface QuizUploadCallback {
         fun onQuizUploaded(quizId: String)
     }

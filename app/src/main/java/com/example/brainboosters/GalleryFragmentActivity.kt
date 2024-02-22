@@ -56,10 +56,11 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
                     val imagePlace = document.getString("place")
                     val imagePerson = document.getString("person")
                     val imageYear = document.getLong("year")?.toInt()
+                    val imageEvent = document.getString("event")
 
                     if (imageUrl != null) {
                         imageName?.let { PictureModel(imageUrl, it, pictureId, imagePerson,
-                            imagePlace, imageYear) }
+                            imagePlace, imageEvent, imageYear) }
                             ?.let { imageList.add(it) }
                     }
                 }

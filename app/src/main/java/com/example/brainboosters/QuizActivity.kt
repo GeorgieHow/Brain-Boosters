@@ -90,7 +90,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         //If only one picture is picked
         if (selectedPictures.size == 1){
-            return listOf(
+            val questions = mutableListOf(
                 Question("Where was this taken?", listOf("Option 1", "Option 2",
                     "Option 3", selectedPictures[0].imagePlace), selectedPictures[0].imagePlace,
                     selectedPictures[0]),
@@ -98,10 +98,23 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     "Option 3", selectedPictures[0].imageYear.toString()),
                     selectedPictures[0].imageYear.toString(),
                     selectedPictures[0]),
-                Question("Who is in this photo?", listOf("Option 1", "Option 2",
-                    "Option 3", selectedPictures[0].imagePerson), selectedPictures[0].imagePerson,
-                    selectedPictures[0]),
+                Question("What event was taking place?", listOf("Option 1", "Option 2",
+                    "Option 3", selectedPictures[0].imageEvent.toString()),
+                    selectedPictures[0].imageEvent.toString(),
+                    selectedPictures[0])
             )
+
+            // Add the question about the person if 'imagePerson' is not empty or null
+            if (!selectedPictures[0].imagePerson.isNullOrEmpty()) {
+                questions.add(
+                    Question("Who is in this photo?", listOf("Option 1", "Option 2",
+                        "Option 3", selectedPictures[0].imagePerson), selectedPictures[0].imagePerson,
+                        selectedPictures[0])
+                )
+            }
+
+            // Return the list of questions
+            return questions
         }
         //If multiple pictures ate picked
         else {
@@ -111,19 +124,24 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             while (questionCount < minimumQuestions) {
                 selectedPictures.forEach { picture ->
-                    if (questionCount < minimumQuestions) {
-                        val questionsForPicture = listOf(
+                    if(questionCount < minimumQuestions) {
+                        val questionsForPicture = mutableListOf(
                             Question("Where was this taken?",
                                 listOf("Option 1", "Option 2", "Option 3", picture.imagePlace),
                                 picture.imagePlace, picture),
                             Question("What year was this taken?",
                                 listOf("Option 1", "Option 2", "Option 3",
                                     picture.imageYear.toString()), picture.imageYear.toString(),
-                                picture),
-                            Question("Who is in this photo?",
-                                listOf("Option 1", "Option 2", "Option 3", picture.imagePerson),
-                                picture.imagePerson, picture)
+                                picture)
                         )
+                        // Only add the question about the person if 'imagePerson' is not empty
+                        if (picture.imagePerson?.isNotEmpty() == true) {
+                            questionsForPicture.add(
+                                Question("Who is in this photo?",
+                                    listOf("Option 1", "Option 2", "Option 3", picture.imagePerson),
+                                    picture.imagePerson, picture)
+                            )
+                        }
                         // Randomly select a question from the list for each picture
                         allQuestions.add(questionsForPicture.random())
                         questionCount++

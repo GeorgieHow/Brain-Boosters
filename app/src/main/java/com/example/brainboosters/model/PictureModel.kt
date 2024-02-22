@@ -8,10 +8,12 @@ data class PictureModel(
     val documentId: String?,
     val imagePerson: String?,
     val imagePlace: String?,
+    val imageEvent: String?,
     val imageYear: Int?
 
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
+        parcel.readString(),
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
@@ -27,6 +29,7 @@ data class PictureModel(
         parcel.writeString(documentId)
         parcel.writeString(imagePerson)
         parcel.writeString(imagePlace)
+        parcel.writeString(imageEvent)
         if (imageYear != null) {
             parcel.writeInt(imageYear)
         }
