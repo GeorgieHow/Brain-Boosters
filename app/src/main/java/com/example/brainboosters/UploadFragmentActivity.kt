@@ -1,7 +1,7 @@
 package com.example.brainboosters
 
 import android.app.Activity
-import android.content.Intent
+import android.content.*
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -66,7 +66,6 @@ class UploadFragmentActivity : Fragment() {
                 Toast.makeText(context, "Please select a picture before uploading.",
                     Toast.LENGTH_SHORT).show()
             }
-
         }
     }
 
