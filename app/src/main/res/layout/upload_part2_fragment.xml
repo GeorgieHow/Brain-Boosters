@@ -24,8 +24,108 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <TextView
+            android:id="@+id/description_explanation"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Enter a description for the photo you uploaded:"
+            android:textColor="@color/inverseSurfaceColor"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="@+id/image_view_left_guideline"
+            app:layout_constraintEnd_toEndOf="@id/image_view_right_guideline"
+            app:layout_constraintTop_toBottomOf="@id/upload_title" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/image_view_left_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.15" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/image_view_right_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.85" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/image_view_bottom_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.33" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:id="@+id/photo_description_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@color/inverseSurfaceColor"
+            android:fontFamily="sans-serif"
+            android:hint="Enter description"
+            android:textSize="16sp"
+            android:textColor="@color/inverseSurfaceColor"
+            android:textColorHint="@color/inverseSurfaceColor"
+            app:layout_constraintEnd_toStartOf="@id/image_view_right_guideline"
+            app:layout_constraintStart_toStartOf="@id/image_view_left_guideline"
+            app:layout_constraintTop_toBottomOf="@id/description_explanation"
+            app:layout_constraintBottom_toBottomOf="@id/image_view_bottom_guideline">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/photo_description_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:inputType="textMultiLine"
+                android:maxLines="5"
+                android:imeOptions="actionDone"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/tags_explanation"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Add some tags that might be relevant to this photo:"
+            android:textColor="@color/inverseSurfaceColor"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="@+id/image_view_left_guideline"
+            app:layout_constraintEnd_toEndOf="@id/image_view_right_guideline"
+            app:layout_constraintTop_toBottomOf="@id/photo_description_text" />
 
 
+        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+            android:id="@+id/tags_autocomplete_text_view"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:hint="Enter a tag here"
+            app:layout_constraintStart_toStartOf="@id/image_view_left_guideline"
+            app:layout_constraintEnd_toEndOf="@id/image_view_right_guideline"
+            app:layout_constraintTop_toBottomOf="@id/tags_explanation"/>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_group"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:padding="16dp"
+            app:layout_constraintStart_toStartOf="@id/image_view_left_guideline"
+            app:layout_constraintEnd_toEndOf="@id/image_view_right_guideline"
+            app:layout_constraintTop_toBottomOf="@id/tags_autocomplete_text_view"
+            app:layout_constraintBottom_toTopOf="@+id/finish_uploading_button"/>
+
+        <Button
+            android:id="@+id/finish_uploading_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Finish uploading picture..."
+            app:layout_constraintStart_toStartOf="@id/image_view_left_guideline"
+            app:layout_constraintEnd_toEndOf="@id/image_view_right_guideline"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>

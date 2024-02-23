@@ -137,8 +137,6 @@ class UploadFragmentActivity : Fragment() {
                         val uid = mAuth.currentUser?.uid
                         val uriString: String = uri.toString()
 
-
-
                         val imageDetails = hashMapOf(
                             "name" to photoName,
                             "uid" to uid,
@@ -151,11 +149,25 @@ class UploadFragmentActivity : Fragment() {
 
                         val imagesCollection = db.collection("images")
                         imagesCollection.add(imageDetails)
+                            .addOnSuccessListener { documentReference ->
+                                // Document added successfully, now get the document ID
+                                val photoId = documentReference.id
+                                Log.d("Firestore", "DocumentSnapshot added with ID: $photoId")
 
-                        (activity as HomePageActivity).changeFragment(uploadPart2Fragment)
+                                // Pass the photo ID to UploadFragmentPart2Activity
+                                val bundle = Bundle().apply {
+                                    putString("photoId", photoId)
+                                }
+                                uploadPart2Fragment.arguments = bundle
 
-                        Log.d("Firestore", "Added Successfully")
-
+                                // Navigate to UploadFragmentPart2Activity
+                                (activity as HomePageActivity).changeFragment(uploadPart2Fragment)
+                            }
+                            .addOnFailureListener { e ->
+                                // Handle the case where adding the document fails
+                                Log.e("Firestore", "Error adding document", e)
+                                Toast.makeText(context, "Failed to upload image details.", Toast.LENGTH_SHORT).show()
+                            }
                     }
                 }
                 .addOnFailureListener { exception ->
