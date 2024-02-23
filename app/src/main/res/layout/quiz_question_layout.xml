@@ -7,6 +7,17 @@
     android:orientation="horizontal"
     android:background="@color/surfaceColor">
 
+    <ProgressBar
+        android:id="@+id/loading_progress_bar"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/primaryColor"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+    
     <TextView
         android:id="@+id/question_title"
         android:layout_width="wrap_content"

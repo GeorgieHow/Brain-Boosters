@@ -15,6 +15,7 @@ import com.example.brainboosters.model.PictureModel
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.LayoutInflater
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.bumptech.glide.load.engine.GlideException
@@ -59,6 +60,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.quiz_question_layout)
 
+        initializeUIForLoading()
+
         textToSpeech = TextToSpeech(this, this)
 
         selectedPictures = intent
@@ -84,6 +87,21 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 }
             }
         }
+    }
+
+    private fun initializeUIForLoading() {
+        // Set the ProgressBar to visible
+        findViewById<ProgressBar>(R.id.loading_progress_bar).visibility = View.VISIBLE
+        // Hide quiz content, e.g., buttons, text views, etc.
+        // Example:
+        findViewById<TextView>(R.id.question_title).visibility = View.GONE
+        findViewById<Button>(R.id.text_to_speech_button).visibility = View.GONE
+        findViewById<ImageView>(R.id.picture_image_view).visibility = View.GONE
+        findViewById<Button>(R.id.answer_1_button).visibility = View.GONE
+        findViewById<Button>(R.id.answer_2_button).visibility = View.GONE
+        findViewById<Button>(R.id.answer_3_button).visibility = View.GONE
+        findViewById<Button>(R.id.answer_4_button).visibility = View.GONE
+        // Repeat for other quiz elements...
     }
 
     private fun getQuestions(selectedPictures: List<PictureModel>): List<Question> {
