@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.chip.*
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 
@@ -20,6 +21,8 @@ class UploadFragmentPart2Activity : Fragment() {
     private val selectedTags = HashSet<String>()
 
     private val galleryFragment = GalleryFragmentActivity()
+
+    private var mAuth = FirebaseAuth.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -55,17 +58,27 @@ class UploadFragmentPart2Activity : Fragment() {
             }
         }
 
+
+
         view.findViewById<Button>(R.id.finish_uploading_button).setOnClickListener {
             val descriptionEditText = view.findViewById<TextInputEditText>(R.id.photo_description_edit_text)
             val description = descriptionEditText.text.toString() // Get this from your input field
-            updatePhotoWithTagsAndDescription(photoId, selectedTags.toList(), description)
+            mAuth.currentUser?.uid?.let { it1 ->
+                updatePhotoWithTagsAndDescription(photoId,
+                    it1, selectedTags.toList(), description)
+            }
 
             (activity as HomePageActivity).changeFragment(galleryFragment)
         }
     }
     private fun fetchTags(callback: (List<String>) -> Unit) {
         val firestore = FirebaseFirestore.getInstance()
-        firestore.collection("tags").get().addOnSuccessListener { snapshot ->
+        val currentUserUid = mAuth.currentUser?.uid
+
+        firestore.collection("tags")
+            .whereEqualTo("uid", currentUserUid)
+            .get()
+            .addOnSuccessListener { snapshot ->
             val tags = snapshot.documents.mapNotNull { it.getString("tagName") }.toList()
             callback(tags)
         }.addOnFailureListener {
@@ -88,7 +101,7 @@ class UploadFragmentPart2Activity : Fragment() {
         }
     }
 
-    private fun updatePhotoWithTagsAndDescription(photoId: String?, tags: List<String>, description: String) {
+    private fun updatePhotoWithTagsAndDescription(photoId: String?, uid: String, tags: List<String>, description: String) {
         val firestore = FirebaseFirestore.getInstance()
         val tagCollection = firestore.collection("tags")
         val photoCollection = firestore.collection("images") // Assuming you have a 'photos' collection
@@ -97,7 +110,7 @@ class UploadFragmentPart2Activity : Fragment() {
         tags.forEach { tagName ->
             tagCollection.whereEqualTo("tagName", tagName).get().addOnSuccessListener { snapshot ->
                 if (snapshot.isEmpty) {
-                    tagCollection.add(mapOf("tagName" to tagName))
+                    tagCollection.add(mapOf("tagName" to tagName, "uid" to uid))
                 }
                 // If the tag exists, we do nothing
             }
