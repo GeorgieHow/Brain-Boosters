@@ -21,10 +21,13 @@ import androidx.appcompat.app.AlertDialog
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.example.brainboosters.accessibility.AccessibleZoomImageView
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
 import java.util.Locale
 import kotlinx.coroutines.*
 import javax.sql.DataSource
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 //Questions up here
 data class Question(
@@ -35,6 +38,8 @@ data class Question(
 )
 
 class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
+
+    private val activityScope = CoroutineScope(Job() + Dispatchers.Main)
 
     private lateinit var selectedPictures: List<PictureModel>
 
@@ -67,8 +72,12 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         selectedPictures = intent
             .getParcelableArrayListExtra<PictureModel>("selectedPictures")
             ?: arrayListOf<PictureModel>()
-        questions = getQuestions(selectedPictures)
-        loadQuestion()
+
+        activityScope.launch {
+            questions = getQuestions(selectedPictures)
+            loadQuestion()
+            updateUIForLoadedContent()
+        }
 
         val textToSpeechButton = findViewById<Button>(R.id.text_to_speech_button)
         textToSpeechButton.setOnClickListener {
@@ -104,10 +113,76 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // Repeat for other quiz elements...
     }
 
-    private fun getQuestions(selectedPictures: List<PictureModel>): List<Question> {
+    private fun updateUIForLoadedContent() {
+        // Hide the ProgressBar
+        findViewById<ProgressBar>(R.id.loading_progress_bar).visibility = View.GONE
+        // Show quiz content
+        findViewById<TextView>(R.id.question_title).visibility = View.VISIBLE
+        findViewById<Button>(R.id.text_to_speech_button).visibility = View.VISIBLE
+        findViewById<ImageView>(R.id.picture_image_view).visibility = View.VISIBLE
+        findViewById<Button>(R.id.answer_1_button).visibility = View.VISIBLE
+        findViewById<Button>(R.id.answer_2_button).visibility = View.VISIBLE
+        findViewById<Button>(R.id.answer_3_button).visibility = View.VISIBLE
+        findViewById<Button>(R.id.answer_4_button).visibility = View.VISIBLE
+        // Repeat for other quiz elements...
+    }
+
+    private suspend fun getQuestions(selectedPictures: List<PictureModel>): List<Question> {
+        val imagesCollectionPath = "images"
 
         //If only one picture is picked
         if (selectedPictures.size == 1){
+            // Fetch additional images from Firestore to use as options
+            val additionalImagesPlace = fetchAdditionalImageData(imagesCollectionPath, "place")
+            val additionalImagesYear = fetchAdditionalImageData(imagesCollectionPath, "year")
+
+            val questions = mutableListOf<Question>()
+            selectedPictures.forEach { picture ->
+                // Initialize a set to ensure options are unique
+                val optionsSetPlace = mutableSetOf<String>()
+                val optionsSetYear = mutableSetOf<String>()
+
+                // Add the correct answer first to ensure it's included
+                picture.imagePlace?.let { optionsSetPlace.add(it) }
+                picture.imageYear?.let { optionsSetYear.add(it.toString()) }
+
+                // Add additional, randomly shuffled options, avoiding duplicates
+                additionalImagesPlace.shuffled().forEach { place ->
+                    if (optionsSetPlace.size < 4) { // Assuming you need 4 options
+                        optionsSetPlace.add(place)
+                    }
+                }
+
+                additionalImagesYear.shuffled().forEach {year ->
+                    if (optionsSetYear.size < 4){
+                        optionsSetYear.add(year)
+                    }
+                }
+
+                // Convert the set back to a list and shuffle it to ensure random order
+                val optionsListPlace = optionsSetPlace.toList().shuffled()
+                val optionsListYear = optionsSetYear.toList().shuffled()
+
+                questions.add(
+                    Question(
+                        questionText = "Where was this taken?",
+                        options = optionsListPlace,
+                        correctAnswer = picture.imagePlace,
+                        pictureModel = picture
+                    )
+                )
+
+                questions.add(
+                    Question(
+                        questionText = "What year was this taken?",
+                        options = optionsListYear,
+                        correctAnswer = picture.imageYear.toString(),
+                        pictureModel = picture
+                    )
+                )
+            }
+
+            /*
             val questions = mutableListOf(
                 Question("Where was this taken?", listOf("Option 1", "Option 2",
                     "Option 3", selectedPictures[0].imagePlace), selectedPictures[0].imagePlace,
@@ -129,7 +204,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         "Option 3", selectedPictures[0].imagePerson), selectedPictures[0].imagePerson,
                         selectedPictures[0])
                 )
-            }
+            }*/
 
             // Return the list of questions
             return questions
@@ -172,6 +247,28 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             // If you end up with more questions than needed due to the loop, trim the list to the desired size
             return if (allQuestions.size > minimumQuestions) allQuestions.take(minimumQuestions) else allQuestions
+        }
+    }
+
+    private suspend fun fetchAdditionalImageData(imagesCollectionPath: String, field: String): List<String> {
+        return suspendCoroutine { continuation ->
+            FirebaseFirestore.getInstance().collection(imagesCollectionPath)
+                .get()
+                .addOnSuccessListener { documents ->
+                    val data = documents.mapNotNull { document ->
+                        val fieldValue = document.get(field)
+                        when (fieldValue) {
+                            is String -> fieldValue // If it's a String, use it directly
+                            is Long -> fieldValue.toString() // If it's a Long, convert to String
+                            is Double -> fieldValue.toString() // Add more types as needed
+                            else -> null // Ignore if it's not a supported type
+                        }
+                    }
+                    continuation.resume(data)
+                }
+                .addOnFailureListener { exception ->
+                    continuation.resumeWith(Result.failure(exception))
+                }
         }
     }
 
@@ -397,6 +494,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             textToSpeech.shutdown()
         }
         super.onDestroy()
+        activityScope.cancel()
     }
 
 
