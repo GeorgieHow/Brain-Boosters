@@ -2,7 +2,8 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <TextView
         android:id="@+id/results_title"
@@ -20,11 +21,11 @@
         android:id="@+id/well_done_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="30dp"
         android:text="Well done!"
         android:textSize="35sp"
         app:layout_constraintTop_toBottomOf="@id/results_title"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <TextView
         android:id="@+id/no_right_title"
@@ -68,16 +69,118 @@
         android:id="@+id/photos_used_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:paddingTop="20dp"
         android:text="Photos Used:"
         android:textSize="30dp"
         app:layout_constraintStart_toStartOf="@id/no_wrong_title"
         app:layout_constraintTop_toBottomOf="@id/no_wrong_title"/>
 
-    <Button
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/pictures_used_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:orientation="horizontal"
+        android:background="@drawable/shadow_drawable"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        tools:listitem="@layout/picture_item_results"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/photos_used_text"
+        />
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:id="@+id/results_notes_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginHorizontal="30dp"
+        android:backgroundTint="@color/inverseSurfaceColor"
+        android:fontFamily="sans-serif"
+        android:hint="Enter Notes"
+        android:textSize="25sp"
+        android:textColor="@color/inverseSurfaceColor"
+        android:textColorHint="@color/inverseSurfaceColor"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/pictures_used_recycler_view">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/photo_notes_edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:textSize="25sp"
+            android:inputType="textMultiLine"
+            android:maxLines="5"
+            android:imeOptions="actionDone"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/mood_toggle_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:singleSelection="true"
+        app:selectionRequired="true"
+        app:checkedButton="@id/happy_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/results_notes_text">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/happy_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Happy"
+        android:textSize="25sp"
+        style="@style/Widget.Material3.Button.OutlinedButton.Icon"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/sad_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sad"
+        android:textSize="25sp"
+        style="@style/Widget.Material3.Button.OutlinedButton.Icon"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/angry_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Angry"
+        android:textSize="25sp"
+        style="@style/Widget.Material3.Button.OutlinedButton.Icon"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/confused_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Confused"
+        android:textSize="25sp"
+        style="@style/Widget.Material3.Button.OutlinedButton.Icon"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/calm_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Calm"
+        android:textSize="25sp"
+        style="@style/Widget.Material3.Button.OutlinedButton.Icon"/>
+    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+
+<Button
+        android:id="@+id/end_quiz_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="End Quiz"
+        android:textSize="35sp"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

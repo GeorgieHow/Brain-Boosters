@@ -1,16 +1,27 @@
 package com.example.brainboosters
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.brainboosters.model.PictureModel
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.common.reflect.TypeToken
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.tasks.await
 
 class QuizResultsActivity : AppCompatActivity(){
 
@@ -19,6 +30,8 @@ class QuizResultsActivity : AppCompatActivity(){
 
     private var mAuth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
+
+    private var quizId: String? = null
 
     private var questionsRight: Int = 0
     private var questionsWrong: Int = 0
@@ -41,8 +54,6 @@ class QuizResultsActivity : AppCompatActivity(){
         questionsRightTextView.text = questionsRight.toString()
         questionsWrongTextView.text = questionsWrong.toString()
 
-
-
         //Array list of photos used
         val selectedPictures: ArrayList<PictureModel> =
             intent.getParcelableArrayListExtra<PictureModel>("selectedPictures")
@@ -56,6 +67,29 @@ class QuizResultsActivity : AppCompatActivity(){
             }
         })
         updateImageDB()
+
+        val imagesRecyclerView = findViewById<RecyclerView>(R.id.pictures_used_recycler_view)
+        imagesRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+
+        // Use the adapter with PictureModel list
+        val adapter = ImagesAdapter(this, selectedPictures)
+        imagesRecyclerView.adapter = adapter
+
+        // Initialize your UI components here...
+        val endQuizButton = findViewById<Button>(R.id.end_quiz_button)
+        val notesEditText = findViewById<EditText>(R.id.photo_notes_edit_text)
+        val moodToggleGroup = findViewById<MaterialButtonToggleGroup>(R.id.mood_toggle_group)
+
+        endQuizButton.setOnClickListener {
+            lifecycleScope.launch {
+                val selectedMoodButtonId = moodToggleGroup.checkedButtonId
+                val selectedMood = findViewById<MaterialButton>(selectedMoodButtonId).text.toString()
+                val notes = notesEditText.text.toString()
+
+                // Call the suspend function to update the Firestore document
+                updateQuizDetails(selectedMood, notes)
+            }
+        }
 
     }
 
@@ -82,6 +116,7 @@ class QuizResultsActivity : AppCompatActivity(){
             .add(quizData)
             .addOnSuccessListener { documentReference ->
                 Log.d("QuizResultsActivity", "DocumentSnapshot added with ID: ${documentReference.id}")
+                this.quizId = documentReference.id
                 callback.onQuizUploaded(documentReference.id)
             }
             .addOnFailureListener { e ->
@@ -149,6 +184,32 @@ class QuizResultsActivity : AppCompatActivity(){
                 }
         }
     }
+    private suspend fun updateQuizDetails(selectedMood: String, notes: String) {
+        quizId?.let { id ->
+            val updateMap = hashMapOf(
+                "mood" to selectedMood,
+                "notes" to notes,
+            )
+
+            try {
+                db.collection("quizzes").document(id)
+                    .update(updateMap as Map<String, Any>). await()
+                Log.d("QuizResultsActivity", "Quiz details updated successfully with current date and time.")
+
+                // Inside QuizResultsActivity, before finishing the activity
+                val sharedPref = this.getSharedPreferences("AppPreferences", MODE_PRIVATE)
+                with(sharedPref.edit()) {
+                    putString("LastFragment", "HomeFragment") // Use a key like "LastFragment" to remember the desired fragment
+                    apply()
+                }
+                finish()
+
+            } catch (e: Exception) {
+                Log.w("QuizResultsActivity", "Error updating quiz details", e)
+            }
+        } ?: Log.e("QuizResultsActivity", "Quiz ID is null. Cannot update quiz details.")
+    }
+
 
     interface QuizUploadCallback {
         fun onQuizUploaded(quizId: String)

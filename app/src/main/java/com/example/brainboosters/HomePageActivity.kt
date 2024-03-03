@@ -1,7 +1,9 @@
 package com.example.brainboosters
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.ismaeldivita.chipnavigation.ChipNavigationBar
@@ -11,6 +13,24 @@ class HomePageActivity : AppCompatActivity() {
     val fragment = HomeFragmentActivity()
     // Add a flag to track when UploadFragmentPart2 is displayed
     private var isUploadFragmentPart2Displayed = false
+
+    override fun onResume() {
+        super.onResume()
+        val sharedPref = this.getSharedPreferences("AppPreferences", MODE_PRIVATE)
+        val lastFragment = sharedPref.getString("LastFragment", null)
+        navigateToFragment(lastFragment)
+    }
+
+    private fun navigateToFragment(fragmentName: String?) {
+        val menuBottom = findViewById<ChipNavigationBar>(R.id.bottom_nav_bar)
+        when (fragmentName) {
+            "HomeFragment" -> {
+                menuBottom.setItemSelected(R.id.nav_home, false) // `false` to not animate the click
+                openMainFragment()
+            }
+            // Add cases for other fragments as needed
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
