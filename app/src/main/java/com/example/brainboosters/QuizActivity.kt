@@ -135,16 +135,20 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             // Fetch additional images from Firestore to use as options
             val additionalImagesPlace = fetchAdditionalImageData(imagesCollectionPath, "place")
             val additionalImagesYear = fetchAdditionalImageData(imagesCollectionPath, "year")
+            val additionalImagesEvent = fetchAdditionalImageData(imagesCollectionPath, "event")
+            val additionalImagesPerson = fetchAdditionalImageData(imagesCollectionPath, "person")
 
             val questions = mutableListOf<Question>()
             selectedPictures.forEach { picture ->
                 // Initialize a set to ensure options are unique
                 val optionsSetPlace = mutableSetOf<String>()
                 val optionsSetYear = mutableSetOf<String>()
+                val optionsSetEvent = mutableSetOf<String>()
 
                 // Add the correct answer first to ensure it's included
                 picture.imagePlace?.let { optionsSetPlace.add(it) }
                 picture.imageYear?.let { optionsSetYear.add(it.toString()) }
+                picture.imageEvent?.let { optionsSetEvent.add(it) }
 
                 // Add additional, randomly shuffled options, avoiding duplicates
                 additionalImagesPlace.shuffled().forEach { place ->
@@ -159,9 +163,16 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     }
                 }
 
+                additionalImagesEvent.shuffled().forEach {event ->
+                    if (optionsSetEvent.size < 4){
+                        optionsSetEvent.add(event)
+                    }
+                }
+
                 // Convert the set back to a list and shuffle it to ensure random order
                 val optionsListPlace = optionsSetPlace.toList().shuffled()
                 val optionsListYear = optionsSetYear.toList().shuffled()
+                val optionsListEvent = optionsSetEvent.toList().shuffled()
 
                 questions.add(
                     Question(
@@ -180,72 +191,90 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         pictureModel = picture
                     )
                 )
-            }
 
-            /*
-            val questions = mutableListOf(
-                Question("Where was this taken?", listOf("Option 1", "Option 2",
-                    "Option 3", selectedPictures[0].imagePlace), selectedPictures[0].imagePlace,
-                    selectedPictures[0]),
-                Question("What year was this taken?", listOf("Option 1", "Option 2",
-                    "Option 3", selectedPictures[0].imageYear.toString()),
-                    selectedPictures[0].imageYear.toString(),
-                    selectedPictures[0]),
-                Question("What event was taking place?", listOf("Option 1", "Option 2",
-                    "Option 3", selectedPictures[0].imageEvent.toString()),
-                    selectedPictures[0].imageEvent.toString(),
-                    selectedPictures[0])
-            )
-
-            // Add the question about the person if 'imagePerson' is not empty or null
-            if (!selectedPictures[0].imagePerson.isNullOrEmpty()) {
                 questions.add(
-                    Question("Who is in this photo?", listOf("Option 1", "Option 2",
-                        "Option 3", selectedPictures[0].imagePerson), selectedPictures[0].imagePerson,
-                        selectedPictures[0])
+                    Question(
+                        questionText = "What event was taking place?",
+                        options = optionsListEvent,
+                        correctAnswer = picture.imageYear.toString().toString(),
+                        pictureModel = picture
+                    )
                 )
-            }*/
+
+                picture.imagePerson?.let { person ->
+                    val optionsSetPerson = mutableSetOf<String>()
+                    optionsSetPerson.add(person) // Add the correct answer
+
+                    // Add additional, randomly shuffled options, avoiding duplicates
+                    additionalImagesPerson.shuffled().forEach { person ->
+                        if (optionsSetPerson.size < 4) { // Assuming you need 4 options
+                            optionsSetPerson.add(person)
+                        }
+                    }
+
+                    // Convert the set back to a list and shuffle it to ensure random order
+                    val optionsListWho = optionsSetPerson.toList().shuffled()
+
+                    questions.add(
+                        Question(
+                            questionText = "Who is in this photo?",
+                            options = optionsListWho,
+                            correctAnswer = person,
+                            pictureModel = picture
+                        )
+                    )
+                }
+            }
 
             // Return the list of questions
             return questions
         }
-        //If multiple pictures ate picked
+        //If multiple pictures are picked
         else {
+            val additionalPlaces = fetchAdditionalImageData(imagesCollectionPath, "place").shuffled().distinct()
+            val additionalYears = fetchAdditionalImageData(imagesCollectionPath, "year").shuffled().distinct()
+            val additionalPersons = fetchAdditionalImageData(imagesCollectionPath, "person").shuffled().distinct()
+            val additionalEvents = fetchAdditionalImageData(imagesCollectionPath, "event").shuffled().distinct()
+
             val allQuestions = mutableListOf<Question>()
             val minimumQuestions = 5
-            var questionCount = 0
+            val usedQuestionsForPicture = mutableMapOf<String, MutableList<String>>() // Track used questions for each picture
 
-            while (questionCount < minimumQuestions) {
-                selectedPictures.forEach { picture ->
-                    if(questionCount < minimumQuestions) {
-                        val questionsForPicture = mutableListOf(
-                            Question("Where was this taken?",
-                                listOf("Option 1", "Option 2", "Option 3", picture.imagePlace),
-                                picture.imagePlace, picture),
-                            Question("What year was this taken?",
-                                listOf("Option 1", "Option 2", "Option 3",
-                                    picture.imageYear.toString()), picture.imageYear.toString(),
-                                picture)
-                        )
-                        // Only add the question about the person if 'imagePerson' is not empty
-                        if (picture.imagePerson?.isNotEmpty() == true) {
-                            questionsForPicture.add(
-                                Question("Who is in this photo?",
-                                    listOf("Option 1", "Option 2", "Option 3", picture.imagePerson),
-                                    picture.imagePerson, picture)
-                            )
-                        }
-                        // Randomly select a question from the list for each picture
-                        allQuestions.add(questionsForPicture.random())
-                        questionCount++
+            // Function to create and add a question if it's unique for the picture
+            fun addQuestionWithRealOptions(picture: PictureModel, category: String, correctAnswer: String, additionalOptions: List<String>) {
+                val usedQuestions = usedQuestionsForPicture.getOrDefault(picture.documentId, mutableListOf())
+                if (!usedQuestions.contains(category)) {
+                    val filteredOptions = additionalOptions.filterNot { it == correctAnswer }.take(3)
+                    val options = (filteredOptions + correctAnswer).shuffled()
+                    val questionText = when (category) {
+                        "place" -> "Where was this taken?"
+                        "year" -> "What year was this taken?"
+                        "person" -> "Who is in this photo?"
+                        "event" -> "What event was taking place?"
+                        else -> ""
                     }
+                    val question = Question(questionText, options, correctAnswer, picture)
+                    allQuestions.add(question)
+                    usedQuestions.add(category)
+                    usedQuestionsForPicture[picture.documentId ?: return] = usedQuestions
                 }
             }
 
-            // Shuffle the list to ensure randomness in question order
+            selectedPictures.shuffled().forEach { picture ->
+                if (allQuestions.size >= minimumQuestions) return@forEach // Break if we have enough questions
+
+                addQuestionWithRealOptions(picture, "place", picture.imagePlace ?: "", additionalPlaces)
+                addQuestionWithRealOptions(picture, "year", picture.imageYear?.toString() ?: "", additionalYears)
+                addQuestionWithRealOptions(picture, "event", picture.imageEvent?: "", additionalEvents)
+                if (picture.imagePerson?.isNotEmpty() == true) {
+                    addQuestionWithRealOptions(picture, "person", picture.imagePerson, additionalPersons)
+                }
+            }
+
+// Shuffle the list to ensure randomness in question order
             allQuestions.shuffle()
 
-            // If you end up with more questions than needed due to the loop, trim the list to the desired size
+// Trim the list to the desired size if necessary
             return if (allQuestions.size > minimumQuestions) allQuestions.take(minimumQuestions) else allQuestions
         }
     }
