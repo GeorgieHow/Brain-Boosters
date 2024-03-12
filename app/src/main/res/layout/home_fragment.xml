@@ -3,13 +3,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:background="#f7fbf1">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -59,15 +57,30 @@
             app:layout_constraintStart_toStartOf="@id/welcome_message"/>
 
         <Button
-            android:id="@+id/start_quiz_button"
+            style="@style/Widget.Material3.Button"
+            android:id="@+id/start_generate_quiz_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="30sp"
+            android:layout_margin="30dp"
             android:padding="25dp"
-            android:text="Start Quiz"
+            android:text="Generate Own Quiz"
             android:background="@color/primaryColor"
             app:layout_constraintStart_toStartOf="@id/home_menu"
             app:layout_constraintTop_toBottomOf="@id/user_fullname"
+            app:layout_constraintEnd_toEndOf="@id/home_menu"
+            />
+
+        <Button
+            style="@style/Widget.Material3.Button"
+            android:id="@+id/start_quick_quiz_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="30dp"
+            android:padding="25dp"
+            android:text="Generate Random Quiz"
+            android:background="@color/primaryColor"
+            app:layout_constraintStart_toStartOf="@id/home_menu"
+            app:layout_constraintTop_toBottomOf="@id/start_generate_quiz_button"
             app:layout_constraintEnd_toEndOf="@id/home_menu"
             />
 

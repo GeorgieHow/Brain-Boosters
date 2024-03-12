@@ -21,20 +21,25 @@ import androidx.appcompat.app.AlertDialog
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.example.brainboosters.accessibility.AccessibleZoomImageView
+import com.google.common.reflect.TypeToken
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
 import java.util.Locale
 import kotlinx.coroutines.*
-import javax.sql.DataSource
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 //Questions up here
+enum class QuestionType{
+    LONG_TERM, SHORT_TERM
+}
+
 data class Question(
     val questionText: String,
     val options: List<String?>,
     val correctAnswer: String?,
-    val pictureModel: PictureModel
+    val pictureModel: PictureModel,
+    val questionType: QuestionType
 )
 
 class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
@@ -43,7 +48,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private lateinit var selectedPictures: List<PictureModel>
 
-    private lateinit var questions: List<Question>
+    private lateinit var questions: MutableList<Question>
     private var currentQuestionIndex = 0
 
     private lateinit var textToSpeech: TextToSpeech
@@ -69,12 +74,19 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         textToSpeech = TextToSpeech(this, this)
 
+        generateRememberNumber()
+        showRememberNumberDialog()
+
+        val quizType = intent.getStringExtra("quizType")
+
         selectedPictures = intent
             .getParcelableArrayListExtra<PictureModel>("selectedPictures")
             ?: arrayListOf<PictureModel>()
 
+
         activityScope.launch {
-            questions = getQuestions(selectedPictures)
+            questions = getQuestions(selectedPictures).toMutableList()
+            addRecallQuestionToEnd()
             loadQuestion()
             updateUIForLoadedContent()
         }
@@ -179,7 +191,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         questionText = "Where was this taken?",
                         options = optionsListPlace,
                         correctAnswer = picture.imagePlace,
-                        pictureModel = picture
+                        pictureModel = picture,
+                        questionType = QuestionType.LONG_TERM
                     )
                 )
 
@@ -188,7 +201,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         questionText = "What year was this taken?",
                         options = optionsListYear,
                         correctAnswer = picture.imageYear.toString(),
-                        pictureModel = picture
+                        pictureModel = picture,
+                        questionType = QuestionType.LONG_TERM
                     )
                 )
 
@@ -197,7 +211,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         questionText = "What event was taking place?",
                         options = optionsListEvent,
                         correctAnswer = picture.imageYear.toString().toString(),
-                        pictureModel = picture
+                        pictureModel = picture,
+                        questionType = QuestionType.LONG_TERM
                     )
                 )
 
@@ -220,7 +235,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             questionText = "Who is in this photo?",
                             options = optionsListWho,
                             correctAnswer = person,
-                            pictureModel = picture
+                            pictureModel = picture,
+                            questionType = QuestionType.LONG_TERM
                         )
                     )
                 }
@@ -253,7 +269,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         "event" -> "What event was taking place?"
                         else -> ""
                     }
-                    val question = Question(questionText, options, correctAnswer, picture)
+                    val question = Question(questionText, options, correctAnswer, picture, QuestionType.LONG_TERM)
                     allQuestions.add(question)
                     usedQuestions.add(category)
                     usedQuestionsForPicture[picture.documentId ?: return] = usedQuestions
@@ -278,6 +294,40 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             return if (allQuestions.size > minimumQuestions) allQuestions.take(minimumQuestions) else allQuestions
         }
     }
+
+
+
+    private lateinit var rememberNumber: String
+    private val distractorNumbers = mutableListOf<String>()
+
+    private fun generateRememberNumber() {
+        val randomNumber = (1000..9999).random().toString() // Generates a random 4-digit number
+        rememberNumber = randomNumber
+
+        // Generate distractor numbers
+        distractorNumbers.clear()
+        while (distractorNumbers.size < 3) {
+            val distractor = (1000..9999).random().toString()
+            if (distractor != rememberNumber && distractor !in distractorNumbers) {
+                distractorNumbers.add(distractor)
+            }
+        }
+    }
+
+    private fun addRecallQuestionToEnd() {
+        val options = mutableListOf(rememberNumber).apply { addAll(distractorNumbers) }.shuffled()
+        val recallQuestion = Question(
+            questionText = "What was the number shown at the start of the quiz?",
+            options = options,
+            correctAnswer = rememberNumber,
+            pictureModel = PictureModel.EMPTY, // Use the placeholder for consistency
+            questionType = QuestionType.SHORT_TERM
+        )
+
+        // Assuming 'questions' is your list of quiz questions
+        questions.add(recallQuestion) // Add this as the last question
+    }
+
 
     private suspend fun fetchAdditionalImageData(imagesCollectionPath: String, field: String): List<String> {
         return suspendCoroutine { continuation ->
@@ -440,6 +490,29 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         dialog.show()
     }
 
+    private fun showRememberNumberDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.remember_number_popup, null)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false) // This dialog should not be dismissible without choosing an option
+            .create()
+
+        val numberToRememberText = dialogView.findViewById<TextView>(R.id.number_to_remember_text)
+        val nextButton = dialogView.findViewById<Button>(R.id.next_button)
+
+        numberToRememberText.text = "Remember this number: $rememberNumber"
+
+        // Use TTS to read out the number
+        speakOut("Remember this number: $rememberNumber")
+
+        nextButton.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+
     private fun evaluateAnswer(selectedAnswer: String, button: Button) {
         val currentQuestion = questions[currentQuestionIndex]
 
@@ -454,8 +527,10 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             questionsRight++
 
             // Increment the correct answer count for the current PictureModel
-            val currentCount = correctAnswersCountMap[currentQuestion.pictureModel.documentId] ?: 0
-            correctAnswersCountMap[currentQuestion.pictureModel.documentId!!] = currentCount + 1
+            // Safely handle nullable documentId
+            val documentId = currentQuestion.pictureModel.documentId ?: "unknown"
+            val currentCount = correctAnswersCountMap[documentId] ?: 0
+            correctAnswersCountMap[documentId] = currentCount + 1
 
         } else {
             //Changes button red
@@ -472,8 +547,9 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             questionsWrong++
 
-            val currentCount = incorrectAnswersCountMap[currentQuestion.pictureModel.documentId] ?: 0
-            incorrectAnswersCountMap[currentQuestion.pictureModel.documentId!!] = currentCount + 1
+            val documentId = currentQuestion.pictureModel.documentId ?: "unknown"
+            val currentCount = incorrectAnswersCountMap[documentId] ?: 0
+            incorrectAnswersCountMap[documentId] = currentCount + 1
         }
 
         goToNextQuestion()

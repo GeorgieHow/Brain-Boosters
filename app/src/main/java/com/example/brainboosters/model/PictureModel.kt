@@ -40,6 +40,7 @@ data class PictureModel(
     }
 
     companion object CREATOR : Parcelable.Creator<PictureModel> {
+        val EMPTY = PictureModel(null, null, null, null, null, null, null)
         override fun createFromParcel(parcel: Parcel): PictureModel {
             return PictureModel(parcel)
         }
@@ -48,4 +49,6 @@ data class PictureModel(
             return arrayOfNulls(size)
         }
     }
+
+
 }

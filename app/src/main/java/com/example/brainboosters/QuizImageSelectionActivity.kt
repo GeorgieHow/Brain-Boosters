@@ -56,10 +56,12 @@ class QuizImageSelectionActivity : Fragment(){
         startQuizButton.setOnClickListener {
             val adapter = recyclerViewImages.adapter as QuizPictureAdapter
             val selectedPictures = adapter.getSelectedPictures()
+            val quizType = "GeneratedQuiz"
 
             if (selectedPictures.isNotEmpty()){
                 val intent = Intent(context, QuizActivity::class.java).apply {
                     putParcelableArrayListExtra("selectedPictures", ArrayList(selectedPictures))
+                    putExtra("quizType", quizType)
                 }
                 startActivity(intent)
             }
