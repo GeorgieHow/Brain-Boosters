@@ -55,4 +55,8 @@
         <item name="boxStrokeColor">#000000</item>
         <item name="boxStrokeWidth">2dp</item>
     </style>
+
+    <style name="Button.White" parent="ThemeOverlay.AppCompat">
+        <item name="colorAccent">#40FFFFFF</item>
+    </style>
 </resources>

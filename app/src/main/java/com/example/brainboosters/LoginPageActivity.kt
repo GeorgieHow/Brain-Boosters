@@ -4,6 +4,7 @@ import android.content.Intent
 import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -27,6 +28,8 @@ class LoginPageActivity : AppCompatActivity() {
         animDrawable.setEnterFadeDuration(10)
         animDrawable.setExitFadeDuration(5000)
         animDrawable.start()
+
+        val saveLoginCheckBox = findViewById<CheckBox>(R.id.saveLoginCheckBox)
 
         val enterButton = findViewById<Button>(R.id.enterButton)
 
@@ -67,6 +70,25 @@ class LoginPageActivity : AppCompatActivity() {
                     .show()
             }
 
+            val sharedPreferences = getSharedPreferences("com.example.brainboosters", MODE_PRIVATE)
+            if (saveLoginCheckBox.isChecked) {
+                sharedPreferences.edit().apply {
+                    putString("email", emailEntered.text.toString())
+                    putString("password", passwordEntered.text.toString())
+                    putBoolean("saveLogin", true)
+                    apply()
+                }
+            } else {
+                // If the box is not checked, clear saved credentials and save the state of the checkbox as false
+                sharedPreferences.edit().apply {
+                    remove("email") // Remove the saved email
+                    remove("password") // Remove the saved password
+                    putBoolean("saveLogin", false) // Save the unchecked state
+                    apply()
+                }
+            }
+
+
         }
 
         val backButton = findViewById<Button>(R.id.backButton)
@@ -74,7 +96,14 @@ class LoginPageActivity : AppCompatActivity() {
             finish()
         }
 
+        val sharedPreferences = getSharedPreferences("com.example.brainboosters", MODE_PRIVATE)
+        val email = sharedPreferences.getString("email", "")
+        val password = sharedPreferences.getString("password", "")
+        val saveLogin = sharedPreferences.getBoolean("saveLogin", false)
 
+        findViewById<EditText>(R.id.emailText).setText(email)
+        findViewById<EditText>(R.id.passwordText).setText(password)
+        saveLoginCheckBox.isChecked = saveLogin
     }
 }
 
