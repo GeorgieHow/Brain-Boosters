@@ -14,12 +14,12 @@ class HomePageActivity : AppCompatActivity() {
     // Add a flag to track when UploadFragmentPart2 is displayed
     private var isUploadFragmentPart2Displayed = false
 
-    override fun onResume() {
+    /*override fun onResume() {
         super.onResume()
         val sharedPref = this.getSharedPreferences("AppPreferences", MODE_PRIVATE)
         val lastFragment = sharedPref.getString("LastFragment", null)
         navigateToFragment(lastFragment)
-    }
+    }*/
 
     private fun navigateToFragment(fragmentName: String?) {
         val menuBottom = findViewById<ChipNavigationBar>(R.id.bottom_nav_bar)

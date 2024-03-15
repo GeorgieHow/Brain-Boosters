@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.RadioGroup
 import androidx.fragment.app.Fragment
 import com.google.android.material.chip.*
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
@@ -104,7 +105,8 @@ class UploadFragmentPart2Activity : Fragment() {
     private fun updatePhotoWithTagsAndDescription(photoId: String?, uid: String, tags: List<String>, description: String) {
         val firestore = FirebaseFirestore.getInstance()
         val tagCollection = firestore.collection("tags")
-        val photoCollection = firestore.collection("images") // Assuming you have a 'photos' collection
+        val photoCollection = firestore.collection("images")
+        val priority = getSelectedPriority()
 
         // Update tags collection
         tags.forEach { tagName ->
@@ -121,7 +123,8 @@ class UploadFragmentPart2Activity : Fragment() {
         photoId?.let {
             photoCollection.document(it).update(mapOf(
                 "description" to description,
-                "tags" to tags
+                "tags" to tags,
+                "priority" to priority
             )).addOnSuccessListener {
                 // Handle success - perhaps navigate back or show a message
             }.addOnFailureListener {
@@ -129,4 +132,15 @@ class UploadFragmentPart2Activity : Fragment() {
             }
         }
     }
+
+    private fun getSelectedPriority(): String {
+        val priorityGroup = view?.findViewById<RadioGroup>(R.id.picture_priority_group)
+        return when (priorityGroup?.checkedRadioButtonId) {
+            R.id.priority_low -> "Low"
+            R.id.priority_normal -> "Normal"
+            R.id.priority_high -> "High"
+            else -> "Normal"
+        }
+    }
+
 }
