@@ -2,6 +2,7 @@ package com.example.brainboosters
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -33,6 +34,8 @@ class HomePageActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        Log.d("HomeDebug", "Started Home.")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.home_page)
         openMainFragment()

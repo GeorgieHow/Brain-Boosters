@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.brainboosters"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -75,6 +75,9 @@ dependencies {
 
     //Gson- For JSON serializing
     implementation("com.google.code.gson:gson:2.8.8")
+
+    //Kotlin-Faker
+    implementation("io.github.serpro69:kotlin-faker:1.16.0")
 
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")

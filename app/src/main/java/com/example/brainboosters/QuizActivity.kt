@@ -28,6 +28,8 @@ import java.util.Locale
 import kotlinx.coroutines.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import io.github.serpro69.kfaker.Faker
+import io.github.serpro69.kfaker.fakerConfig
 
 //Questions up here
 enum class QuestionType{
@@ -62,7 +64,12 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var correctAnswersCountMap: MutableMap<String, Int> = mutableMapOf()
     private var incorrectAnswersCountMap: MutableMap<String, Int> = mutableMapOf()
 
+    private val config = fakerConfig { locale = "en-GB" }
+    private val faker = Faker(config)
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        Log.d("QuizDebug", "Started Quiz.")
 
         //For making it full screen
         hideSystemUI()
@@ -136,7 +143,24 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         findViewById<Button>(R.id.answer_2_button).visibility = View.VISIBLE
         findViewById<Button>(R.id.answer_3_button).visibility = View.VISIBLE
         findViewById<Button>(R.id.answer_4_button).visibility = View.VISIBLE
-        // Repeat for other quiz elements...
+    }
+
+    private fun generateFakePlaces(count: Int): List<String> {
+        return List(count) { faker.address.city()}
+    }
+
+    private fun generateFakeYears(count: Int): List<String> {
+        val currentYear = java.time.Year.now().value
+        return List(count) { (1900..currentYear).random().toString() }
+    }
+
+    private fun generateFakeEvents(count: Int): List<String> {
+        val events = listOf("Festival", "Conference", "Exhibition", "Marathon")
+        return List(count) { "${faker.job.field().capitalize()} ${events.random()}" }
+    }
+
+    private fun generateFakePersons(count: Int): List<String> {
+        return List(count) { faker.name.name() }
     }
 
     private suspend fun getQuestions(selectedPictures: List<PictureModel>): List<Question> {
@@ -162,6 +186,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 picture.imageYear?.let { optionsSetYear.add(it.toString()) }
                 picture.imageEvent?.let { optionsSetEvent.add(it) }
 
+                Log.d("QuizDebug", "Correct place added: ${optionsSetPlace.joinToString()}")
+
                 // Add additional, randomly shuffled options, avoiding duplicates
                 additionalImagesPlace.shuffled().forEach { place ->
                     if (optionsSetPlace.size < 4) { // Assuming you need 4 options
@@ -181,10 +207,58 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     }
                 }
 
+                val totalNeededPlace = 4
+                val currentCountPlace = optionsSetPlace.size
+                val additionalCountPlaceNeeded = totalNeededPlace - currentCountPlace
+
+                if (additionalImagesPlace.size < additionalCountPlaceNeeded) {
+                    val fakePlacesNeeded = additionalCountPlaceNeeded - additionalImagesPlace.size
+                    val fakePlaces = generateFakePlaces(fakePlacesNeeded)
+
+                    optionsSetPlace.addAll(additionalImagesPlace)
+                    optionsSetPlace.addAll(fakePlaces)
+                } else {
+                    optionsSetPlace.addAll(additionalImagesPlace.shuffled().take(additionalCountPlaceNeeded))
+                }
+
+                val totalNeededYear = 4
+                val currentCountYear = optionsSetYear.size
+                val additionalCountYearNeeded = totalNeededYear - currentCountYear
+
+                if (additionalImagesYear.size < additionalCountYearNeeded) {
+                    val fakeYearsNeeded = additionalCountYearNeeded - additionalImagesYear.size
+                    val fakeYears = generateFakeYears(fakeYearsNeeded)
+
+                    optionsSetYear.addAll(additionalImagesYear)
+                    optionsSetYear.addAll(fakeYears)
+                } else {
+                    optionsSetYear.addAll(additionalImagesYear.shuffled().take(additionalCountYearNeeded))
+                }
+
+                val totalNeededEvent = 4
+                val currentCountEvent = optionsSetEvent.size
+                val additionalCountEventNeeded = totalNeededEvent - currentCountEvent
+
+                if (additionalImagesEvent.size < additionalCountEventNeeded) {
+                    val fakeEventsNeeded = additionalCountEventNeeded - additionalImagesEvent.size
+                    val fakeEvents = generateFakeEvents(fakeEventsNeeded)
+
+                    optionsSetEvent.addAll(additionalImagesEvent)
+                    optionsSetEvent.addAll(fakeEvents)
+
+                } else {
+                    optionsSetEvent.addAll(additionalImagesEvent.shuffled().take(additionalCountEventNeeded))
+                }
+
+                Log.d("QuizDebug", "Final places set: ${optionsSetPlace.joinToString()}")
+
                 // Convert the set back to a list and shuffle it to ensure random order
                 val optionsListPlace = optionsSetPlace.toList().shuffled()
                 val optionsListYear = optionsSetYear.toList().shuffled()
                 val optionsListEvent = optionsSetEvent.toList().shuffled()
+
+                Log.d("QuizDebug", "Options list for place (shuffled): ${optionsListPlace.joinToString()}")
+
 
                 questions.add(
                     Question(
@@ -225,6 +299,21 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         if (optionsSetPerson.size < 4) { // Assuming you need 4 options
                             optionsSetPerson.add(person)
                         }
+                    }
+
+                    val totalNeededPerson = 4
+                    val currentCountPerson = optionsSetPerson.size
+                    val additionalCountPersonNeeded = totalNeededPerson - currentCountPerson
+
+                    if (additionalImagesPerson.size < additionalCountPersonNeeded) {
+                        val fakePersonsNeeded = additionalCountPersonNeeded - additionalImagesPerson.size
+                        val fakePersons = generateFakePersons(fakePersonsNeeded)
+
+                        optionsSetPerson.addAll(additionalImagesPerson)
+                        optionsSetPerson.addAll(fakePersons)
+
+                    }  else {
+                        optionsSetPerson.addAll(additionalImagesPerson.shuffled().take(additionalCountPersonNeeded))
                     }
 
                     // Convert the set back to a list and shuffle it to ensure random order
@@ -337,10 +426,10 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     val data = documents.mapNotNull { document ->
                         val fieldValue = document.get(field)
                         when (fieldValue) {
-                            is String -> fieldValue // If it's a String, use it directly
-                            is Long -> fieldValue.toString() // If it's a Long, convert to String
-                            is Double -> fieldValue.toString() // Add more types as needed
-                            else -> null // Ignore if it's not a supported type
+                            is String -> fieldValue
+                            is Long -> fieldValue.toString()
+                            is Double -> fieldValue.toString()
+                            else -> null
                         }
                     }
                     continuation.resume(data)
@@ -440,12 +529,10 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val shuffledAnswers = question.options.shuffled()
 
             //Answers
-            findViewById<Button>(R.id.answer_1_button).text = shuffledAnswers[0]
-            findViewById<Button>(R.id.answer_2_button).text = shuffledAnswers[1]
-            findViewById<Button>(R.id.answer_3_button).text = shuffledAnswers[2]
-            findViewById<Button>(R.id.answer_4_button).text = shuffledAnswers[3]
-
-
+            val buttons = getListOfButtons()
+            buttons.forEachIndexed { index, button ->
+                button.text = shuffledAnswers.getOrNull(index) ?: ""
+            }
         }
     }
 

@@ -25,7 +25,6 @@ class HomeFragmentActivity : Fragment() {
     private val db = FirebaseFirestore.getInstance()
     private val picturesList = mutableListOf<PictureModel>()
 
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View?
