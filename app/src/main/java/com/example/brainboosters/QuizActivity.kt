@@ -69,13 +69,15 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        Log.d("QuizDebug", "Started Quiz.")
 
         //For making it full screen
         hideSystemUI()
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.quiz_question_layout)
+
+
+        Log.wtf("QuizDebugging", "Started Quiz.")
 
         initializeUIForLoading()
 
@@ -186,7 +188,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 picture.imageYear?.let { optionsSetYear.add(it.toString()) }
                 picture.imageEvent?.let { optionsSetEvent.add(it) }
 
-                Log.d("QuizDebug", "Correct place added: ${optionsSetPlace.joinToString()}")
+                Log.wtf("QuizDebugging", "Correct place added: ${optionsSetPlace.joinToString()}")
 
                 // Add additional, randomly shuffled options, avoiding duplicates
                 additionalImagesPlace.shuffled().forEach { place ->
@@ -207,57 +209,14 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     }
                 }
 
-                val totalNeededPlace = 4
-                val currentCountPlace = optionsSetPlace.size
-                val additionalCountPlaceNeeded = totalNeededPlace - currentCountPlace
-
-                if (additionalImagesPlace.size < additionalCountPlaceNeeded) {
-                    val fakePlacesNeeded = additionalCountPlaceNeeded - additionalImagesPlace.size
-                    val fakePlaces = generateFakePlaces(fakePlacesNeeded)
-
-                    optionsSetPlace.addAll(additionalImagesPlace)
-                    optionsSetPlace.addAll(fakePlaces)
-                } else {
-                    optionsSetPlace.addAll(additionalImagesPlace.shuffled().take(additionalCountPlaceNeeded))
-                }
-
-                val totalNeededYear = 4
-                val currentCountYear = optionsSetYear.size
-                val additionalCountYearNeeded = totalNeededYear - currentCountYear
-
-                if (additionalImagesYear.size < additionalCountYearNeeded) {
-                    val fakeYearsNeeded = additionalCountYearNeeded - additionalImagesYear.size
-                    val fakeYears = generateFakeYears(fakeYearsNeeded)
-
-                    optionsSetYear.addAll(additionalImagesYear)
-                    optionsSetYear.addAll(fakeYears)
-                } else {
-                    optionsSetYear.addAll(additionalImagesYear.shuffled().take(additionalCountYearNeeded))
-                }
-
-                val totalNeededEvent = 4
-                val currentCountEvent = optionsSetEvent.size
-                val additionalCountEventNeeded = totalNeededEvent - currentCountEvent
-
-                if (additionalImagesEvent.size < additionalCountEventNeeded) {
-                    val fakeEventsNeeded = additionalCountEventNeeded - additionalImagesEvent.size
-                    val fakeEvents = generateFakeEvents(fakeEventsNeeded)
-
-                    optionsSetEvent.addAll(additionalImagesEvent)
-                    optionsSetEvent.addAll(fakeEvents)
-
-                } else {
-                    optionsSetEvent.addAll(additionalImagesEvent.shuffled().take(additionalCountEventNeeded))
-                }
-
-                Log.d("QuizDebug", "Final places set: ${optionsSetPlace.joinToString()}")
+                Log.wtf("QuizDebugging", "Final places set: ${optionsSetPlace.joinToString()}")
 
                 // Convert the set back to a list and shuffle it to ensure random order
                 val optionsListPlace = optionsSetPlace.toList().shuffled()
                 val optionsListYear = optionsSetYear.toList().shuffled()
                 val optionsListEvent = optionsSetEvent.toList().shuffled()
 
-                Log.d("QuizDebug", "Options list for place (shuffled): ${optionsListPlace.joinToString()}")
+                Log.wtf("QuizDebugging", "Options list for place (shuffled): ${optionsListPlace.joinToString()}")
 
 
                 questions.add(
@@ -300,21 +259,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             optionsSetPerson.add(person)
                         }
                     }
-
-                    val totalNeededPerson = 4
-                    val currentCountPerson = optionsSetPerson.size
-                    val additionalCountPersonNeeded = totalNeededPerson - currentCountPerson
-
-                    if (additionalImagesPerson.size < additionalCountPersonNeeded) {
-                        val fakePersonsNeeded = additionalCountPersonNeeded - additionalImagesPerson.size
-                        val fakePersons = generateFakePersons(fakePersonsNeeded)
-
-                        optionsSetPerson.addAll(additionalImagesPerson)
-                        optionsSetPerson.addAll(fakePersons)
-
-                    }  else {
-                        optionsSetPerson.addAll(additionalImagesPerson.shuffled().take(additionalCountPersonNeeded))
-                    }
+                    
 
                     // Convert the set back to a list and shuffle it to ensure random order
                     val optionsListWho = optionsSetPerson.toList().shuffled()

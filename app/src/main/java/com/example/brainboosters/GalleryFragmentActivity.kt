@@ -50,25 +50,38 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
             .get()
             .addOnSuccessListener { result ->
                 for (document in result) {
+
+                    val photoType = document.getString("photoType")
+
                     val imageUrl = document.getString("imageUrl")
                     val pictureId = document.id
-                    val imageName = document.getString("name")
-                    val imagePlace = document.getString("place")
-                    val imagePerson = document.getString("person")
-                    val imageYear = document.getLong("year")?.toInt()
-                    val imageEvent = document.getString("event")
+
+                    val imageDescription = document.getString("description")
 
                     if (imageUrl != null) {
-                        imageName?.let { PictureModel(imageUrl, it, pictureId, imagePerson,
-                            imagePlace, imageEvent, imageYear) }
-                            ?.let { imageList.add(it) }
+                        if(photoType == "family album"){
+                            imageList.add(PictureModel(
+                                imageUrl = imageUrl,
+                                documentId = pictureId,
+                                imageDescription = imageDescription
+                            ))
+                        }else{
+                            val imageName = document.getString("name")
+                            val imagePlace = document.getString("place")
+                            val imagePerson = document.getString("person")
+                            val imageYear = document.getLong("year")?.toInt()
+                            val imageEvent = document.getString("event")
+
+                            imageName?.let { PictureModel(imageUrl, it, pictureId, imagePerson,
+                                imagePlace, imageEvent, imageDescription, imageYear) }
+                                ?.let { imageList.add(it) }
+                        }
                     }
                 }
                 adapter.notifyDataSetChanged()
             }
             .addOnFailureListener { exception ->
-                Log.d("TAG", "Error getting documents: ", exception)
-            }
+                Log.wtf("TAG", "Error getting documents: ", exception) }
 
     }
 

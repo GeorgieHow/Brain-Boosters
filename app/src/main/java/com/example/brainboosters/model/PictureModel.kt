@@ -4,15 +4,17 @@ import android.os.Parcelable
 
 data class PictureModel(
     val imageUrl: String?,
-    val imageName: String?,
-    val documentId: String?,
-    val imagePerson: String?,
-    val imagePlace: String?,
-    val imageEvent: String?,
-    val imageYear: Int?
+    val imageName: String? = null,
+    val documentId: String? = null,
+    val imagePerson: String? = null,
+    val imagePlace: String? = null,
+    val imageEvent: String? = null,
+    val imageDescription: String? = null,
+    val imageYear: Int? = null
 
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
+        parcel.readString(),
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
@@ -30,6 +32,7 @@ data class PictureModel(
         parcel.writeString(imagePerson)
         parcel.writeString(imagePlace)
         parcel.writeString(imageEvent)
+        parcel.writeString(imageDescription)
         if (imageYear != null) {
             parcel.writeInt(imageYear)
         }
@@ -40,7 +43,7 @@ data class PictureModel(
     }
 
     companion object CREATOR : Parcelable.Creator<PictureModel> {
-        val EMPTY = PictureModel(null, null, null, null, null, null, null)
+        val EMPTY = PictureModel(null, null, null, null, null, null, null, null)
         override fun createFromParcel(parcel: Parcel): PictureModel {
             return PictureModel(parcel)
         }

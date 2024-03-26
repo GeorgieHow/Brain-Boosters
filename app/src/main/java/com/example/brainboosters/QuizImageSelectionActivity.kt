@@ -85,10 +85,11 @@ class QuizImageSelectionActivity : Fragment(){
                     val imagePerson = document.getString("person")
                     val imageYear = document.getLong("year")?.toInt()
                     val imageEvent = document.getString("event")
+                    val imageDescription = document.getString("description")
 
                     if (imageUrl != null) {
                         imageName?.let { PictureModel(imageUrl, it, pictureId, imagePerson,
-                            imagePlace, imageEvent, imageYear) }
+                            imagePlace, imageEvent, imageDescription, imageYear) }
                             ?.let { picturesList.add(it) }
                     }
                 }

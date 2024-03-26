@@ -2,6 +2,7 @@ package com.example.brainboosters
 import android.content.Intent
 import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
@@ -12,7 +13,6 @@ class WelcomePageActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.welcome_page)
-
 
         val rootLayout = findViewById<ConstraintLayout>(R.id.welcome_page_layout)
         val animDrawable = rootLayout.background as AnimationDrawable

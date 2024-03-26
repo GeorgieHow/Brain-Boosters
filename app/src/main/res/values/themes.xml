@@ -50,13 +50,4 @@
         <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh</item>
         <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest</item>
     </style>
-
-    <style name="LoginTextInputLayoutStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
-        <item name="boxStrokeColor">#000000</item>
-        <item name="boxStrokeWidth">2dp</item>
-    </style>
-
-    <style name="Button.White" parent="ThemeOverlay.AppCompat">
-        <item name="colorAccent">#40FFFFFF</item>
-    </style>
 </resources>

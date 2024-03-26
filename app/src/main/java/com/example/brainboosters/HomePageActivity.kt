@@ -35,7 +35,7 @@ class HomePageActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        Log.d("HomeDebug", "Started Home.")
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.home_page)
         openMainFragment()

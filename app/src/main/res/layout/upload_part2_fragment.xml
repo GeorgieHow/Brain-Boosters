@@ -98,15 +98,24 @@
             app:layout_constraintTop_toBottomOf="@id/photo_description_text" />
 
 
-        <com.google.android.material.textfield.MaterialAutoCompleteTextView
-            android:id="@+id/tags_autocomplete_text_view"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tags_autocomplete_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:hint="Enter a tag here"
             app:layout_constraintStart_toStartOf="@id/image_view_left_guideline"
             app:layout_constraintEnd_toEndOf="@id/image_view_right_guideline"
-            app:layout_constraintTop_toBottomOf="@id/tags_explanation"/>
+            app:layout_constraintTop_toBottomOf="@id/tags_explanation">
+
+            <AutoCompleteTextView
+                android:id="@+id/tags_autocomplete_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:hint="Enter a tag here"
+                style="@style/Widget.MaterialComponents.AutoCompleteTextView.FilledBox"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chip_group"
@@ -115,7 +124,7 @@
             android:padding="16dp"
             app:layout_constraintStart_toStartOf="@id/image_view_left_guideline"
             app:layout_constraintEnd_toEndOf="@id/image_view_right_guideline"
-            app:layout_constraintTop_toBottomOf="@id/tags_autocomplete_text_view"
+            app:layout_constraintTop_toBottomOf="@id/tags_autocomplete_text"
             app:layout_constraintBottom_toTopOf="@+id/picture_priority_group"/>
 
         <RadioGroup

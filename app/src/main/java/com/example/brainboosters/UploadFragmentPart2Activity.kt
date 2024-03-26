@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.RadioGroup
 import androidx.fragment.app.Fragment
@@ -35,7 +36,7 @@ class UploadFragmentPart2Activity : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val autoCompleteTextView = view.findViewById<MaterialAutoCompleteTextView>(R.id.tags_autocomplete_text_view)
+        val autoCompleteTextView = view.findViewById<AutoCompleteTextView>(R.id.tags_autocomplete_edit_text)
         val chipGroup = view.findViewById<ChipGroup>(R.id.chip_group) // Assuming you have a ChipGroup in your layout
 
         // Fetch tags from Firebase
