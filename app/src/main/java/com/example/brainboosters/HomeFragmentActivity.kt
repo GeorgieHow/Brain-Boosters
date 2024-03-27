@@ -1,6 +1,7 @@
 package com.example.brainboosters
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -54,21 +55,19 @@ class HomeFragmentActivity : Fragment() {
         }
 
         val startGenerateQuizButton = findViewById<Button>(R.id.start_generate_quiz_button)
+        startGenerateQuizButton.setBackgroundColor(Color.parseColor("#38656B"))
+
+        val familyAlbumQuizButton = findViewById<Button>(R.id.family_album_button)
+        familyAlbumQuizButton.setBackgroundColor(Color.parseColor("#917C9F"))
+
         val quizImageSelection = QuizImageSelectionActivity()
         startGenerateQuizButton.setOnClickListener {
             (activity as HomePageActivity).changeFragment(quizImageSelection)
         }
 
-        val startQuickQuizButton = findViewById<Button>(R.id.start_quick_quiz_button)
-        startQuickQuizButton.setOnClickListener {
-            lifecycleScope.launch {
-                val pictures = fetchRandomPictures()
-                // Now you have your MutableList<PictureModel>, pass it to QuizActivity
-                val intent = Intent(context, QuizActivity::class.java).apply {
-                    putExtra("selectedPictures", ArrayList(pictures)) // Assuming PictureModel is Parcelable
-                }
-                startActivity(intent)
-            }
+        val familyAlbum = FamilyAlbumActivity()
+        familyAlbumQuizButton.setOnClickListener {
+            (activity as HomePageActivity).changeFragment(familyAlbum)
         }
 
         //Log-Out Button Functionality, Signs out user and takes them back to the welcome page
@@ -82,36 +81,8 @@ class HomeFragmentActivity : Fragment() {
 
     }
 
-    suspend fun fetchRandomPictures(): MutableList<PictureModel> = withContext(Dispatchers.IO) {
-        val db = FirebaseFirestore.getInstance()
-        try {
-            val documents = db.collection("images").get().await()
-            val pictures = documents.documents.mapNotNull { document ->
-                try {
-                    PictureModel(
-                        imageUrl = document.getString("imageUrl"),
-                        imageName = document.getString("name"),
-                        documentId = document.id,
-                        imagePerson = document.getString("person"),
-                        imagePlace = document.getString("place"),
-                        imageEvent = document.getString("event"),
-                        imageYear = document.getLong("year")?.toInt()
-                    )
-                } catch (e: Exception) {
-                    null // Skip any documents that don't match the expected structure
-                }
-            }.shuffled().take(4).toMutableList()
 
-            pictures
-        } catch (e: Exception) {
-            mutableListOf() // Return an empty list in case of error
-        }
-    }
 
-    interface PictureCallback {
-        fun onSuccess(pictures: List<PictureModel>)
-        fun onError(e: Exception)
-    }
 
 
 }

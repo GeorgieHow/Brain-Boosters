@@ -19,7 +19,6 @@ class GalleryPictureAdapter(private val context: Context,
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageView: ImageView = itemView.findViewById(R.id.picture_image_view)
-        //val pictureNameTextView: TextView = itemView.findViewById(R.id.picture_name_text_view)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

@@ -1,16 +1,21 @@
 package com.example.brainboosters.model
+
 import android.os.Parcel
 import android.os.Parcelable
+import com.google.firebase.Timestamp
+import java.util.Date
+
 
 data class PictureModel(
-    val imageUrl: String?,
+    val imageUrl: String? = null,
     val imageName: String? = null,
     val documentId: String? = null,
     val imagePerson: String? = null,
     val imagePlace: String? = null,
     val imageEvent: String? = null,
     val imageDescription: String? = null,
-    val imageYear: Int? = null
+    val imageYear: Int? = null,
+    val timestamp: Timestamp? = null
 
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
@@ -21,7 +26,11 @@ data class PictureModel(
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
-        parcel.readInt()
+        parcel.readInt(),
+        timestamp = parcel.readLong().let {
+            if (it == -1L) null else Timestamp(Date(it))
+        }
+
     ) {
     }
 
@@ -36,6 +45,7 @@ data class PictureModel(
         if (imageYear != null) {
             parcel.writeInt(imageYear)
         }
+        parcel.writeLong(timestamp?.toDate()?.time ?: -1L)
     }
 
     override fun describeContents(): Int {

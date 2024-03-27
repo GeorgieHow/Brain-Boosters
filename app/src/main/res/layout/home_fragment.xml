@@ -64,7 +64,6 @@
             android:layout_margin="30dp"
             android:padding="25dp"
             android:text="Generate Own Quiz"
-            android:background="@color/primaryColor"
             app:layout_constraintStart_toStartOf="@id/home_menu"
             app:layout_constraintTop_toBottomOf="@id/user_fullname"
             app:layout_constraintEnd_toEndOf="@id/home_menu"
@@ -72,13 +71,12 @@
 
         <Button
             style="@style/Widget.Material3.Button"
-            android:id="@+id/start_quick_quiz_button"
+            android:id="@+id/family_album_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="30dp"
             android:padding="25dp"
-            android:text="Generate Random Quiz"
-            android:background="@color/primaryColor"
+            android:text="Go to Family Album"
             app:layout_constraintStart_toStartOf="@id/home_menu"
             app:layout_constraintTop_toBottomOf="@id/start_generate_quiz_button"
             app:layout_constraintEnd_toEndOf="@id/home_menu"
@@ -91,7 +89,6 @@
             android:layout_margin="30sp"
             android:padding="25dp"
             android:text="Log Out"
-            android:background="@color/primaryColor"
             app:layout_constraintStart_toStartOf="@id/home_menu"
             app:layout_constraintBottom_toBottomOf="@id/home_menu"/>
 

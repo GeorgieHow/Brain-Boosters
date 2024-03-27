@@ -49,7 +49,6 @@
         android:layout_margin="30sp"
         android:padding="25dp"
         android:text="Back"
-        android:background="@color/primaryColor"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
@@ -60,7 +59,6 @@
         android:layout_margin="30sp"
         android:padding="25dp"
         android:text="Start Quiz"
-        android:background="@color/primaryColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
