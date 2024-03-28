@@ -52,7 +52,7 @@ class FamilyAlbumAdapter(private val items: MutableList<Any>) : RecyclerView.Ada
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder.itemViewType) {
             VIEW_TYPE_HEADER -> (holder as HeaderViewHolder).bind(items[position] as String)
-            VIEW_TYPE_PHOTO -> (holder as PhotoViewHolder).bind(items[position] as PictureModel)
+            VIEW_TYPE_PHOTO -> (holder as PhotoViewHolder).bind(items[position] as PictureModel, listener)
         }
     }
 
@@ -66,15 +66,25 @@ class FamilyAlbumAdapter(private val items: MutableList<Any>) : RecyclerView.Ada
     class PhotoViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val imageView: ImageView = view.findViewById(R.id.imageView_photo)
 
-        fun bind(pictureModel: PictureModel) {
+        fun bind(pictureModel: PictureModel, listener: OnItemClickListener?) {
             Glide.with(imageView.context) // Provide a context
                 .load(pictureModel.imageUrl) // Load the image URL
                 .placeholder(R.drawable.shadow_drawable)
                 .into(imageView) // The target ImageView
-        }
 
+            itemView.setOnClickListener{
+                listener?.onItemClick(absoluteAdapterPosition)
+            }
+        }
     }
 
+    private var listener: OnItemClickListener? = null
+    fun setOnItemClickListener(listener: OnItemClickListener) {
+        this.listener = listener
+    }
+    interface OnItemClickListener {
+        fun onItemClick(position: Int)
+    }
     override fun getItemCount() = items.size
     companion object {
         private const val VIEW_TYPE_HEADER = 0

@@ -25,6 +25,7 @@ class FamilyAlbumActivity : Fragment(){
     private lateinit var recyclerView: RecyclerView
 
     private var adapter = FamilyAlbumAdapter(mutableListOf())
+    val imageList = mutableListOf<PictureModel>()
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -53,10 +54,6 @@ class FamilyAlbumActivity : Fragment(){
         }
 
         recyclerView.adapter = adapter
-
-
-
-
         fetchImages()
 
         val backButton = view.findViewById<Button>(R.id.back_button)
@@ -65,11 +62,68 @@ class FamilyAlbumActivity : Fragment(){
             (activity as HomePageActivity).changeFragment(homePage)
         }
 
+        adapter.setOnItemClickListener(object: FamilyAlbumAdapter.OnItemClickListener {
+            override fun onItemClick(position: Int) {
+
+                Log.wtf("ItemClick", "Position: $position, URL: ${imageList[position].imageUrl}")
+                // Existing logic...
+
+                var adjustedPosition = position
+                for (i in 0 until position) {
+                    if (adapter.isHeader(i)) {
+                        adjustedPosition-- // Decrement for each header before the clicked position
+                    }
+                }
+
+                // Use 'adjustedPosition' to access 'imageList'
+                if (adjustedPosition >= 0 && adjustedPosition < imageList.size) {
+                    val selectedPicture = imageList[adjustedPosition]
+                    val selectedPictureID = selectedPicture.documentId
+
+                    if (selectedPictureID != null) {
+                        db.collection("images")
+                            .document(selectedPictureID)
+                            .get()
+                            .addOnSuccessListener { documentSnapshot ->
+                                val imageUrl = documentSnapshot.getString("imageUrl")
+                                val pictureId = documentSnapshot.id
+                                val imageDescription = documentSnapshot.getString("description")
+                                val timestamp = documentSnapshot.getTimestamp("createdAt")
+
+                                Log.wtf("HELP", "Clickable: $position Picture: $imageUrl")
+
+                                // Create a new fragment instance with the selected picture data
+                                val familyAlbumPictureFragment = imageUrl?.let {
+                                    if (pictureId != null) {
+                                        if (imageDescription != null) {
+                                            FamilyAlbumPictureActivity.newInstance(
+                                                imageUrl,
+                                                pictureId,
+                                                imageDescription,
+                                                timestamp.toString()
+                                            )
+                                        } else {
+                                            FamilyAlbumActivity()
+                                        }
+                                    } else {
+                                        // Provide a default fragment instance if imageName is null
+                                        FamilyAlbumActivity()
+                                    }
+                                } ?: FamilyAlbumActivity()
+
+
+
+                                // Replace the current fragment with the detail fragment
+                                (activity as HomePageActivity).changeFragment(familyAlbumPictureFragment)
+                            }
+                    }
+                }
+            }
+        })
     }
 
     private fun fetchImages() {
         val currentUserID = mAuth.currentUser?.uid ?: return
-        val picturesList = mutableListOf<PictureModel>()
 
         db.collection("images")
             .whereEqualTo("uid", currentUserID)
@@ -92,9 +146,9 @@ class FamilyAlbumActivity : Fragment(){
                         timestamp = timestamp
                     )
 
-                    picturesList.add(picture)
+                    imageList.add(picture)
                 }
-                val groupedPictures = groupPicturesByMonth(picturesList)
+                val groupedPictures = groupPicturesByMonth(imageList)
                 adapter.updateData(groupedPictures)
             }
             .addOnFailureListener { exception ->

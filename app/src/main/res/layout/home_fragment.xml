@@ -56,6 +56,15 @@
             app:layout_constraintTop_toBottomOf="@+id/welcome_message"
             app:layout_constraintStart_toStartOf="@id/welcome_message"/>
 
+        <TextView
+            android:id="@+id/date_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12pt"
+            android:padding="20dp"
+            app:layout_constraintEnd_toEndOf="@id/home_menu"
+            app:layout_constraintTop_toTopOf="@id/home_menu"/>
+
         <Button
             style="@style/Widget.Material3.Button"
             android:id="@+id/start_generate_quiz_button"

@@ -19,6 +19,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class HomeFragmentActivity : Fragment() {
 
@@ -30,6 +32,12 @@ class HomeFragmentActivity : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View?
             = inflater.inflate(R.layout.home_fragment, container, false).apply {
+
+        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        val currentDate = LocalDate.now().format(formatter)
+        val dateTextView = findViewById<TextView>(R.id.date_text_view)
+
+        dateTextView.text = currentDate
 
 
         //Welcome Message set up for the user

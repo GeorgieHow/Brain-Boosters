@@ -52,6 +52,7 @@
         android:textSize="25dp"
         android:textColor="#FFFFFF"
         android:textColorHint="#FFFFFF"
+        android:gravity="center_horizontal"
         app:layout_constraintStart_toStartOf="@id/login_text"
         app:layout_constraintEnd_toEndOf="@id/login_text"
         app:layout_constraintTop_toBottomOf="@id/login_text"/>
@@ -67,6 +68,7 @@
         android:inputType="textPassword"
         android:textColor="#FFFFFF"
         android:textColorHint="#FFFFFF"
+        android:gravity="center_horizontal"
         app:layout_constraintTop_toBottomOf="@id/emailText"
         app:layout_constraintStart_toStartOf="@id/login_text"
         app:layout_constraintEnd_toEndOf="@id/login_text"/>
