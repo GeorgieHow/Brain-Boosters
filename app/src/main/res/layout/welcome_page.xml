@@ -45,7 +45,7 @@
         android:id="@+id/welcome_message"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
+        android:layout_marginHorizontal="50dp"
         android:textAlignment="center"
         android:gravity="center"
         android:text="Please click the sign in button to start, or the log-in button to continue from where you last left off."

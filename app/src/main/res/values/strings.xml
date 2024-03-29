@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Brain Boosters</string>
+
+    <string-array name="dementia_levels">
+        <item>Mild</item>
+        <item>Moderate</item>
+        <item>Severe</item>
+    </string-array>
 </resources>
