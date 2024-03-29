@@ -34,7 +34,7 @@ class LoginPageActivity : AppCompatActivity() {
 
         val enterButton = findViewById<Button>(R.id.enterButton)
 
-        enterButton.setBackgroundColor(Color.parseColor("#73FFFFFF"))
+        enterButton.setBackgroundColor(Color.parseColor("#4DFFFFFF"))
 
         //Checks if user has an account and entered details are correct
         enterButton.setOnClickListener{
@@ -96,7 +96,7 @@ class LoginPageActivity : AppCompatActivity() {
 
         val backButton = findViewById<Button>(R.id.backButton)
 
-        backButton.setBackgroundColor(Color.parseColor("#73FFFFFF"))
+        backButton.setBackgroundColor(Color.parseColor("#4DFFFFFF"))
 
         backButton.setOnClickListener{
             finish()

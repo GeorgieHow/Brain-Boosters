@@ -24,7 +24,7 @@ class WelcomePageActivity : AppCompatActivity() {
 
         val loginButton = findViewById<Button>(R.id.login_button)
 
-        loginButton.setBackgroundColor(Color.parseColor("#73FFFFFF"))
+        loginButton.setBackgroundColor(Color.parseColor("#4DFFFFFF"))
 
         loginButton.setOnClickListener{
             val intent = Intent(this, LoginPageActivity::class.java)
@@ -33,7 +33,7 @@ class WelcomePageActivity : AppCompatActivity() {
 
         val signupButton = findViewById<Button>(R.id.sign_up_button)
 
-        signupButton.setBackgroundColor(Color.parseColor("#73FFFFFF"))
+        signupButton.setBackgroundColor(Color.parseColor("#4DFFFFFF"))
 
         signupButton.setOnClickListener{
             val intent = Intent(this, SignUpPageActivity::class.java)

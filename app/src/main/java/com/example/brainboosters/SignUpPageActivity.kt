@@ -1,6 +1,7 @@
 package com.example.brainboosters
 
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
 import android.util.Log
@@ -32,15 +33,17 @@ class SignUpPageActivity : AppCompatActivity() {
         animDrawable.setExitFadeDuration(5000)
         animDrawable.start()
 
-        val signUpButton = findViewById<Button>(R.id.signUpButton)
+        val signUpButton = findViewById<Button>(R.id.sign_up_button)
+
+        signUpButton.setBackgroundColor(Color.parseColor("#4DFFFFFF"))
 
         signUpButton.setOnClickListener{
                 view ->
 
-            val emailEntered = findViewById<EditText>(R.id.emailText)
-            val passwordEntered = findViewById<EditText>(R.id.passwordText)
+            val emailEntered = findViewById<EditText>(R.id.email_text)
+            val passwordEntered = findViewById<EditText>(R.id.password_text)
 
-            val passwordRetyped = findViewById<EditText>(R.id.passwordRetypeText)
+            val passwordRetyped = findViewById<EditText>(R.id.password_retype_text)
 
             val emailString = emailEntered.text.toString()
             val passwordString = passwordEntered.text.toString()
@@ -63,7 +66,7 @@ class SignUpPageActivity : AppCompatActivity() {
                                     .collection("users")
                                 val userDocument = usersCollection.document(userid!!)
 
-                                val fullName = findViewById<EditText>(R.id.fullNameText).text
+                                val fullName = findViewById<EditText>(R.id.full_name_text).text
                                     .toString()
 
                                 val userDetails = hashMapOf(
@@ -94,7 +97,10 @@ class SignUpPageActivity : AppCompatActivity() {
             }
         }
 
-        val backButton = findViewById<Button>(R.id.backButton)
+        val backButton = findViewById<Button>(R.id.back_button)
+
+        backButton.setBackgroundColor(Color.parseColor("#4DFFFFFF"))
+
         backButton.setOnClickListener{
             finish()
         }
