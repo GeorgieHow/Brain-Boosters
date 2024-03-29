@@ -1,5 +1,6 @@
 package com.example.brainboosters
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
 import android.util.Log
@@ -21,13 +22,19 @@ class WelcomePageActivity : AppCompatActivity() {
         animDrawable.setExitFadeDuration(5000)
         animDrawable.start()
 
-        val loginButton = findViewById<Button>(R.id.loginButton)
+        val loginButton = findViewById<Button>(R.id.login_button)
+
+        loginButton.setBackgroundColor(Color.parseColor("#73FFFFFF"))
+
         loginButton.setOnClickListener{
             val intent = Intent(this, LoginPageActivity::class.java)
             startActivity(intent)
         }
 
-        val signupButton = findViewById<Button>(R.id.signUpButton)
+        val signupButton = findViewById<Button>(R.id.sign_up_button)
+
+        signupButton.setBackgroundColor(Color.parseColor("#73FFFFFF"))
+
         signupButton.setOnClickListener{
             val intent = Intent(this, SignUpPageActivity::class.java)
             startActivity(intent)

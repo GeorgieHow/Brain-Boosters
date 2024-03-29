@@ -1,6 +1,7 @@
 package com.example.brainboosters
 
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
 import android.widget.Button
@@ -32,6 +33,8 @@ class LoginPageActivity : AppCompatActivity() {
         val saveLoginCheckBox = findViewById<CheckBox>(R.id.saveLoginCheckBox)
 
         val enterButton = findViewById<Button>(R.id.enterButton)
+
+        enterButton.setBackgroundColor(Color.parseColor("#73FFFFFF"))
 
         //Checks if user has an account and entered details are correct
         enterButton.setOnClickListener{
@@ -92,6 +95,9 @@ class LoginPageActivity : AppCompatActivity() {
         }
 
         val backButton = findViewById<Button>(R.id.backButton)
+
+        backButton.setBackgroundColor(Color.parseColor("#73FFFFFF"))
+
         backButton.setOnClickListener{
             finish()
         }

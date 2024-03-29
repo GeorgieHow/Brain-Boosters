@@ -93,6 +93,7 @@
         android:layout_marginTop="40dp"
         android:text="Enter"
         android:textSize="25dp"
+        android:textColor="#FFFFFF"
         app:layout_constraintTop_toBottomOf="@id/saveLoginCheckBox"
         app:layout_constraintStart_toStartOf="@id/passwordText"
         app:layout_constraintEnd_toEndOf="@id/passwordText"/>
@@ -105,6 +106,7 @@
         android:layout_margin="40dp"
         android:text="Back"
         android:textSize="25dp"
+        android:textColor="#FFFFFF"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         />
