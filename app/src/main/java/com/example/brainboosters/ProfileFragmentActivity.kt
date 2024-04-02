@@ -147,7 +147,12 @@ class ProfileFragmentActivity : Fragment() {
                             uploadImageToFirebaseStorage(uri, userId)
                         } ?: Toast.makeText(context, "Not logged in", Toast.LENGTH_SHORT).show()}
                 }
-
+                else{
+                    Uri.parse(originalProfilePicUrl)?.let { uri ->
+                        mAuth.currentUser?.uid?.let { userId ->
+                            uploadImageToFirebaseStorage(uri, userId)
+                        } ?: Toast.makeText(context, "Not logged in", Toast.LENGTH_SHORT).show()}
+                }
             } else {
             }
         }
@@ -197,12 +202,14 @@ class ProfileFragmentActivity : Fragment() {
 
     private fun updateUserData(fullName: String, age: Int, dementiaType: String, dementiaLevel: String) {
         val userId = mAuth.currentUser?.uid ?: return
+        val email = mAuth.currentUser?.email
 
         val userUpdates = hashMapOf<String, Any>(
             "fullName" to fullName,
             "age" to age,
             "dementiaType" to dementiaType,
-            "dementiaLevel" to dementiaLevel
+            "dementiaLevel" to dementiaLevel,
+            "email" to email.toString()
         )
 
         db.collection("users").document(userId)

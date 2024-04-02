@@ -39,6 +39,7 @@ class HomeFragmentActivity : Fragment() {
 
         dateTextView.text = currentDate
 
+
         //Welcome Message set up for the user
         val fullNameTextView = findViewById<TextView>(R.id.user_fullname)
 
