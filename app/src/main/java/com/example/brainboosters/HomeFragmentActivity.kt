@@ -12,6 +12,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.brainboosters.model.PictureModel
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
@@ -77,6 +78,23 @@ class HomeFragmentActivity : Fragment() {
         familyAlbumQuizButton.setOnClickListener {
             (activity as HomePageActivity).changeFragment(familyAlbum)
         }
+
+        // Using coroutine to perform database operation on a background thread
+        lifecycleScope.launch {
+            val userDoc = withContext(Dispatchers.IO) {
+                db.collection("users").document(userEmail!!).get().await()
+            }
+
+            // Check if age, dementiaType, and dementiaLevel exist and are not null
+            val age = userDoc.getDouble("age") // Firestore stores numbers as Doubles
+            val dementiaType = userDoc.getString("dementiaType")
+            val dementiaLevel = userDoc.getString("dementiaLevel")
+
+            if (age == null || dementiaType == null || dementiaLevel == null) {
+                Snackbar.make(this@apply, "Please update your profile information if possible in the profile menu", Snackbar.LENGTH_LONG).show()
+            }
+        }
+
 
         //Log-Out Button Functionality, Signs out user and takes them back to the welcome page
         val logOutButton = findViewById<Button>(R.id.log_out_button)
