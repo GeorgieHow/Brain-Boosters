@@ -47,30 +47,26 @@ class LoginPageActivity : AppCompatActivity() {
             val isEmailEmpty = emailEntered.text.toString()
             val isPasswordEmpty = passwordEntered.text.toString()
 
-            if(isEmailEmpty.isNotEmpty() && isPasswordEmpty.isNotEmpty()) {
-
-                mAuth.signInWithEmailAndPassword(
-                    emailEntered.text.toString(),
-                    passwordEntered.text.toString()
-                )
-                    .addOnCompleteListener(
-                        this
-                    ) { task ->
+            if (isEmailEmpty.isNotEmpty() && isPasswordEmpty.isNotEmpty()) {
+                mAuth.signInWithEmailAndPassword(emailEntered.text.toString(), passwordEntered.text.toString())
+                    .addOnCompleteListener(this) { task ->
                         if (task.isSuccessful) {
-                            //remove done and make them go to home page LOL.
-                            Toast.makeText(this, "Account does exist",
-                                Toast.LENGTH_SHORT).show()
-                            val intent = Intent(this, HomePageActivity::class.java)
-                            startActivity(intent)
+                            val user = mAuth.currentUser
+                            if (user != null && user.isEmailVerified) {
+                                Toast.makeText(this, "Account does exist", Toast.LENGTH_SHORT).show()
+                                val intent = Intent(this, HomePageActivity::class.java)
+                                startActivity(intent)
+                            } else {
+                                Toast.makeText(this, "Please verify your email before logging in.", Toast.LENGTH_LONG).show()
+                                mAuth.signOut()
+                            }
                         } else {
-                            Toast.makeText(this, "Account does not exist",
-                                Toast.LENGTH_SHORT).show()
+                            // Authentication failed, show a message to the user.
+                            Toast.makeText(this, "Authentication failed.", Toast.LENGTH_SHORT).show()
                         }
                     }
-            }
-            else{
-                Toast.makeText(this, "Don't leave fields empty", Toast.LENGTH_SHORT)
-                    .show()
+            } else {
+                Toast.makeText(this, "Don't leave fields empty", Toast.LENGTH_SHORT).show()
             }
 
             val sharedPreferences = getSharedPreferences("com.example.brainboosters", MODE_PRIVATE)

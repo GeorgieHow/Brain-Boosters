@@ -59,8 +59,16 @@ class SignUpPageActivity : AppCompatActivity() {
                                 Toast.makeText(this, "Account Created",
                                     Toast.LENGTH_SHORT).show()
 
+
                                 val user = task.result?.user
                                 val userid = user?.uid
+
+                                user?.sendEmailVerification()?.addOnSuccessListener {
+                                    Toast.makeText(applicationContext, "Verification email sent.", Toast.LENGTH_SHORT).show()
+
+                                }?.addOnFailureListener { e ->
+                                    Toast.makeText(applicationContext, "Failed to send verification email: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
 
                                 val usersCollection = FirebaseFirestore.getInstance()
                                     .collection("users")
