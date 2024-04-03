@@ -17,6 +17,8 @@ import com.example.brainboosters.model.PictureModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickListener {
 
@@ -49,46 +51,6 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
 
         val currentUserID = mAuth.currentUser?.uid
 
-        /*
-        db.collection("images")
-            .whereEqualTo("uid", currentUserID)
-            .get()
-            .addOnSuccessListener { result ->
-                for (document in result) {
-
-                    val photoType = document.getString("photoType")
-
-                    val imageUrl = document.getString("imageUrl")
-                    val pictureId = document.id
-
-                    val imageDescription = document.getString("description")
-
-                    if (imageUrl != null) {
-                        if(photoType == "family album"){
-                            imageList.add(PictureModel(
-                                imageUrl = imageUrl,
-                                documentId = pictureId,
-                                imageDescription = imageDescription
-                            ))
-                        }else{
-                            val imageName = document.getString("name")
-                            val imagePlace = document.getString("place")
-                            val imagePerson = document.getString("person")
-                            val imageYear = document.getLong("year")?.toInt()
-                            val imageEvent = document.getString("event")
-
-                            imageName?.let { PictureModel(imageUrl, it, pictureId, imagePerson,
-                                imagePlace, imageEvent, imageDescription, imageYear) }
-                                ?.let { imageList.add(it) }
-                        }
-                    }
-                }
-                adapter.notifyDataSetChanged()
-            }
-            .addOnFailureListener { exception ->
-                Log.wtf("TAG", "Error getting documents: ", exception) }
-            */
-
         val gallerySpinner: Spinner = view.findViewById(R.id.gallery_filter_spinner)
 
         val spinnerAdapter: ArrayAdapter<CharSequence> = ArrayAdapter.createFromResource(
@@ -112,45 +74,91 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
     }
 
     override fun onItemClick(position: Int) {
-        // Handle item click here
-        // For example, you can navigate to a detail fragment with data from imageList[position]
-
         val selectedPicture = imageList[position]
         val selectedPictureID = selectedPicture.documentId
 
-        Log.d("Firebase", "$selectedPicture, and the id? $selectedPictureID" )
+        Log.d("Firebase", "$selectedPicture, and the id? $selectedPictureID")
 
         if (selectedPictureID != null) {
             db.collection("images")
                 .document(selectedPictureID)
                 .get()
                 .addOnSuccessListener { documentSnapshot ->
-                    val imageUrl = documentSnapshot.getString("imageUrl")
-                    val imageName = documentSnapshot.getString("name")
-                    val imageYear = documentSnapshot.getLong("year").toString()
-                    val imagePlace = documentSnapshot.getString("place")
+                    val type = documentSnapshot.getString("photoType")
 
-                    // Create a new fragment instance with the selected picture data
-                    val detailFragment = imageUrl?.let {
-                        if (imageName != null) {
-                            if (imageYear != null) {
-                                PictureFragmentActivity.newInstance(
-                                    it,
-                                    imageName,
-                                    imageYear,
-                                    imagePlace
-                                )
-                            } else {
-                                GalleryFragmentActivity()
-                            }
-                        } else {
-                            // Provide a default fragment instance if imageName is null
-                            GalleryFragmentActivity()
+                    when (type) {
+                        "family album" -> {
+                            val documentId = documentSnapshot.id
+                            val imageUrl = documentSnapshot.getString("imageUrl")
+                            val name = documentSnapshot.getString("name")?: "Name"
+                            val event = documentSnapshot.getString("event")?: "Event"
+                            val description = documentSnapshot.getString("description")
+                            val person = documentSnapshot.getString("person")?: "Person"
+                            val place = documentSnapshot.getString("place")?: "Place"
+                            val priority = documentSnapshot.getString("priority")?: "Normal"
+                            val tags = documentSnapshot.get("tags") as List<String>? ?: listOf()
+                            val year = documentSnapshot.getLong("year")?.toString() ?: "Unknown"
+
+                            // New part: Handling the createdAt timestamp
+                            val createdAtTimestamp = documentSnapshot.getTimestamp("createdAt")
+                            val createdAtDate = createdAtTimestamp?.toDate()
+                            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                            val createdAtString = createdAtDate?.let { dateFormat.format(it) }
+
+                            val tagsArrayList = ArrayList(tags)
+
+                            // Assuming your QuizFragmentActivity can handle a java.util.Date for createdAt
+                            val pictureFragment = imageUrl?.let {
+                                PictureFragmentActivity.newInstance(documentId, it, name, year, place, event, description, person, priority, tagsArrayList, createdAtString, type)
+
+                            }?: GalleryFragmentActivity()
+
+                            (activity as HomePageActivity).changeFragment(pictureFragment)
                         }
-                    } ?: GalleryFragmentActivity()
+                        "quiz" -> {
+                            val documentId = documentSnapshot.id
+                            val imageUrl = documentSnapshot.getString("imageUrl")
+                            val name = documentSnapshot.getString("name")
+                            val event = documentSnapshot.getString("event")
+                            val description = documentSnapshot.getString("description")
+                            val person = documentSnapshot.getString("person")
+                            val place = documentSnapshot.getString("place")
+                            val priority = documentSnapshot.getString("priority")?: "Normal"
+                            val tags = documentSnapshot.get("tags") as List<String>? ?: listOf()
+                            val year = documentSnapshot.getLong("year")?.toString() ?: "Unknown"
 
-                    // Replace the current fragment with the detail fragment
-                    (activity as HomePageActivity).changeFragment(detailFragment)
+                            // New part: Handling the createdAt timestamp
+                            val createdAtTimestamp = documentSnapshot.getTimestamp("createdAt")
+                            val createdAtDate = createdAtTimestamp?.toDate()
+                            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                            val createdAtString = createdAtDate?.let { dateFormat.format(it) }
+
+                            val tagsArrayList = ArrayList(tags)
+
+                            // Assuming your QuizFragmentActivity can handle a java.util.Date for createdAt
+                            val pictureFragment = imageUrl?.let {
+                                if (name != null) {
+                                    if (event != null) {
+                                        PictureFragmentActivity.newInstance(
+                                            documentId, it, name, year, place, event, description, person, priority, tagsArrayList, createdAtString, type
+                                        )
+                                    }
+                                    else{
+                                        GalleryFragmentActivity()
+                                    }
+                                }
+                                else{
+                                    GalleryFragmentActivity()
+                                }
+                            }?: GalleryFragmentActivity()
+
+                            (activity as HomePageActivity).changeFragment(pictureFragment)
+
+                        }
+                        else -> {
+                            (activity as HomePageActivity).changeFragment(GalleryFragmentActivity())
+                        }
+                    }
                 }
         }
     }

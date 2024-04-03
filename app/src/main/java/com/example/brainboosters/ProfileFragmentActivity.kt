@@ -125,7 +125,7 @@ class ProfileFragmentActivity : Fragment() {
             editDementiaTypeEditText.visibility = View.GONE
             editDementiaLevelSpinner.visibility = View.GONE
 
-            selectedImageUri = Uri.parse(originalProfilePicUrl)
+            selectedImageUri = Uri.parse(originalProfilePicUrl ?: return@setOnClickListener)
 
             loadProfileImage(originalProfilePicUrl)
         }

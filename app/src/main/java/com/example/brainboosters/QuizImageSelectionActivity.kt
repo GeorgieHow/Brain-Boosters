@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.brainboosters.adapter.QuizPictureAdapter
 import com.example.brainboosters.model.PictureModel
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class QuizImageSelectionActivity : Fragment(){
@@ -21,6 +22,7 @@ class QuizImageSelectionActivity : Fragment(){
     private lateinit var recyclerViewImages: RecyclerView
     private val picturesList = mutableListOf<PictureModel>()
     private val db = FirebaseFirestore.getInstance()
+    private val mAuth = FirebaseAuth.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -73,9 +75,11 @@ class QuizImageSelectionActivity : Fragment(){
         }
     }
 
-    fun fetchPicturesFromFirestore(completion: (List<PictureModel>) -> Unit) {
+    private fun fetchPicturesFromFirestore(completion: (List<PictureModel>) -> Unit) {
 
-        db.collection("images").get()
+        db.collection("images")
+            .whereEqualTo("uid", mAuth.currentUser?.uid)
+            .get()
             .addOnSuccessListener { documents ->
                 for (document in documents) {
                     val imageUrl = document.getString("imageUrl")
