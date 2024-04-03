@@ -1,9 +1,11 @@
 package com.example.brainboosters
 
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
@@ -148,6 +150,23 @@ class PictureFragmentActivity : Fragment() {
         val confirmEditButton: Button = view.findViewById(R.id.confirm_edit_button)
         val cancelEditButton: Button = view.findViewById(R.id.cancel_button)
 
+        fileTagsEditText.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                val tagName = fileTagsEditText.text.toString().trim()
+                if (tagName.isNotEmpty()) {
+                    // Add the chip to the ChipGroup
+                    addChipToGroup(tagName, tagsChipGroup)
+                    // Clear the input
+                    fileTagsEditText.text = null
+                    // Check and add the tag to Firebase if it doesn't exist
+                    addTagToFirebaseIfNotExists(tagName)
+                }
+                true // Consumes the action
+            } else {
+                false // Doesn't consume the action
+            }
+        }
+
         editButton.setOnClickListener {
             if(imageType == "quiz"){
 
@@ -208,102 +227,231 @@ class PictureFragmentActivity : Fragment() {
 
                 // Load existing tags as chips
                 loadExistingTagsAsChips(tagsChipGroup, imageTags)
+            }else{
+                backButton.visibility = View.GONE
+                editButton.visibility = View.GONE
+                confirmEditButton.visibility = View.VISIBLE
+                cancelEditButton.visibility = View.VISIBLE
+
+                fileDescriptionTextView.visibility = View.GONE
+                fileDescriptionEditText.visibility = View.VISIBLE
+
+                filePriorityTextView.visibility = View.GONE
+                prioritySpinner.visibility = View.VISIBLE
+
+                fileTagsTextView.visibility = View.GONE
+                fileTagsEditText.visibility = View.VISIBLE
+
+                filePictureImageView.visibility = View.GONE
+                fileCreatedAtTextView.visibility = View.GONE
+                fileCreatedTitle.visibility = View.GONE
+
+                tagsChipGroup.visibility = View.VISIBLE
+
+                val constraintSet = ConstraintSet()
+                constraintSet.clone(constraintLayout)
+                val priorityTitleTextView: TextView = view.findViewById(R.id.priority_title)
+
+                constraintSet.connect(priorityTitleTextView.id, ConstraintSet.TOP, fileDescriptionEditText.id, ConstraintSet.BOTTOM, 10)
+                constraintSet.applyTo(constraintLayout)
+
+                // Fetch tags for the logged-in user and populate the AutoCompleteTextView
+                val userId = mAuth.currentUser?.uid
+                if (userId != null) {
+                    db.collection("tags")
+                        .whereEqualTo("uid", userId)
+                        .get()
+                        .addOnSuccessListener { documents ->
+                            val tags = documents.mapNotNull { it.getString("tagName") }
+                            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, tags)
+                            fileTagsEditText.setAdapter(adapter)
+                        }
+                }
+
+                // Load existing tags as chips
+                loadExistingTagsAsChips(tagsChipGroup, imageTags)
             }
         }
 
         confirmEditButton.setOnClickListener {
+            if(imageType == "quiz") {
+                val imageName = fileNameEditText.text.toString()
+                val imageYear = fileYearEditText.text.toString().toIntOrNull()
+                val imagePlace = filePlaceEditText.text.toString()
+                val imageEvent = fileEventEditText.text.toString()
+                val imageDescription = fileDescriptionEditText.text.toString()
+                val imagePerson = filePersonEditText.text.toString()
+                val imagePriority = prioritySpinner.selectedItem.toString()
 
-            val imageName = fileNameEditText.text.toString()
-            val imageYear = fileYearEditText.text.toString().toIntOrNull()
-            val imagePlace = filePlaceEditText.text.toString()
-            val imageEvent = fileEventEditText.text.toString()
-            val imageDescription = fileDescriptionEditText.text.toString()
-            val imagePerson = filePersonEditText.text.toString()
-            val imagePriority = prioritySpinner.selectedItem.toString()
+                // Collect tags from ChipGroup
+                val tags = mutableListOf<String>()
+                for (i in 0 until tagsChipGroup.childCount) {
+                    val chip = tagsChipGroup.getChildAt(i) as Chip
+                    tags.add(chip.text.toString())
+                }
 
-            // Collect tags from ChipGroup
-            val tags = mutableListOf<String>()
-            for (i in 0 until tagsChipGroup.childCount) {
-                val chip = tagsChipGroup.getChildAt(i) as Chip
-                tags.add(chip.text.toString())
+                // Assume you have a path or unique identifier for the image/document you're updating
+                val imageDocRef = imageId?.let { it1 -> db.collection("images").document(it1) }
+
+                val updatedImageDetails = hashMapOf(
+                    "name" to imageName,
+                    "year" to imageYear,
+                    "place" to imagePlace,
+                    "event" to imageEvent,
+                    "description" to imageDescription,
+                    "person" to imagePerson,
+                    "priority" to imagePriority,
+                    "tags" to tags
+                )
+
+                if (imageDocRef != null) {
+                    imageDocRef.update(updatedImageDetails as Map<String, Any>)
+                        .addOnSuccessListener {
+                            // Handle success
+                            Toast.makeText(
+                                context,
+                                "Image details updated successfully.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            // Optionally, navigate the user away from the edit screen or refresh the data
+                        }
+                        .addOnFailureListener { e ->
+                            // Handle failure
+                            Toast.makeText(
+                                context,
+                                "Error updating image details: ${e.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                }
+
+                backButton.visibility = View.VISIBLE
+                editButton.visibility = View.VISIBLE
+                confirmEditButton.visibility = View.GONE
+                cancelEditButton.visibility = View.GONE
+
+                fileNameTextView.text = imageName
+                fileNameTextView.visibility = View.VISIBLE
+                fileNameEditText.visibility = View.GONE
+
+                fileYearTextView.text = imageYear.toString()
+                fileYearTextView.visibility = View.VISIBLE
+                fileYearEditText.visibility = View.GONE
+
+                filePlaceTextView.text = imagePlace
+                filePlaceTextView.visibility = View.VISIBLE
+                filePlaceEditText.visibility = View.GONE
+
+                fileEventTextView.text = imageEvent
+                fileEventTextView.visibility = View.VISIBLE
+                fileEventEditText.visibility = View.GONE
+
+                fileDescriptionTextView.text = imageDescription
+                fileDescriptionTextView.visibility = View.VISIBLE
+                fileDescriptionEditText.visibility = View.GONE
+
+                filePersonTextView.text = imagePerson
+                filePersonTextView.visibility = View.VISIBLE
+                filePersonEditText.visibility = View.GONE
+
+                filePriorityTextView.text = imagePriority
+                filePriorityTextView.visibility = View.VISIBLE
+                prioritySpinner.visibility = View.GONE
+
+                fileTagsTextView.text = tags.toString()
+                fileTagsTextView.visibility = View.VISIBLE
+                fileTagsEditText.visibility = View.GONE
+
+                filePictureImageView.visibility = View.VISIBLE
+                fileCreatedAtTextView.visibility = View.VISIBLE
+                fileCreatedTitle.visibility = View.VISIBLE
+
+                tagsChipGroup.visibility = View.GONE
+
+                val constraintSet = ConstraintSet()
+                constraintSet.clone(constraintLayout)
+
+                constraintSet.connect(
+                    filePersonTitleTextView.id,
+                    ConstraintSet.TOP,
+                    fileDescriptionTextView.id,
+                    ConstraintSet.BOTTOM,
+                    10
+                )
+
+                constraintSet.applyTo(constraintLayout)
             }
+            else{
+                val imageDescription = fileDescriptionEditText.text.toString()
+                val imagePriority = prioritySpinner.selectedItem.toString()
 
-            // Assume you have a path or unique identifier for the image/document you're updating
-            val imageDocRef = imageId?.let { it1 -> db.collection("images").document(it1) }
+                // Collect tags from ChipGroup
+                val tags = mutableListOf<String>()
+                for (i in 0 until tagsChipGroup.childCount) {
+                    val chip = tagsChipGroup.getChildAt(i) as Chip
+                    tags.add(chip.text.toString())
+                }
 
-            val updatedImageDetails = hashMapOf(
-                "name" to imageName,
-                "year" to imageYear,
-                "place" to imagePlace,
-                "event" to imageEvent,
-                "description" to imageDescription,
-                "person" to imagePerson,
-                "priority" to imagePriority,
-                "tags" to tags
-            )
+                // Assume you have a path or unique identifier for the image/document you're updating
+                val imageDocRef = imageId?.let { it1 -> db.collection("images").document(it1) }
 
-            if (imageDocRef != null) {
-                imageDocRef.update(updatedImageDetails as Map<String, Any>)
-                    .addOnSuccessListener {
-                        // Handle success
-                        Toast.makeText(context, "Image details updated successfully.", Toast.LENGTH_SHORT).show()
-                        // Optionally, navigate the user away from the edit screen or refresh the data
-                    }
-                    .addOnFailureListener { e ->
-                        // Handle failure
-                        Toast.makeText(context, "Error updating image details: ${e.message}", Toast.LENGTH_SHORT).show()
-                    }
+                val updatedImageDetails = hashMapOf(
+                    "description" to imageDescription,
+                    "priority" to imagePriority,
+                    "tags" to tags
+                )
+
+                if (imageDocRef != null) {
+                    imageDocRef.update(updatedImageDetails as Map<String, Any>)
+                        .addOnSuccessListener {
+                            // Handle success
+                            Toast.makeText(
+                                context,
+                                "Image details updated successfully.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            // Optionally, navigate the user away from the edit screen or refresh the data
+                        }
+                        .addOnFailureListener { e ->
+                            // Handle failure
+                            Toast.makeText(
+                                context,
+                                "Error updating image details: ${e.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                }
+
+                backButton.visibility = View.VISIBLE
+                editButton.visibility = View.VISIBLE
+                confirmEditButton.visibility = View.GONE
+                cancelEditButton.visibility = View.GONE
+
+                fileDescriptionTextView.text = imageDescription
+                fileDescriptionTextView.visibility = View.VISIBLE
+                fileDescriptionEditText.visibility = View.GONE
+
+                filePriorityTextView.text = imagePriority
+                filePriorityTextView.visibility = View.VISIBLE
+                prioritySpinner.visibility = View.GONE
+
+                fileTagsTextView.text = tags.toString()
+                fileTagsTextView.visibility = View.VISIBLE
+                fileTagsEditText.visibility = View.GONE
+
+                filePictureImageView.visibility = View.VISIBLE
+                fileCreatedAtTextView.visibility = View.VISIBLE
+                fileCreatedTitle.visibility = View.VISIBLE
+
+                tagsChipGroup.visibility = View.GONE
+
+                val constraintSet = ConstraintSet()
+                constraintSet.clone(constraintLayout)
+                val priorityTitleTextView: TextView = view.findViewById(R.id.priority_title)
+
+                constraintSet.connect(priorityTitleTextView.id, ConstraintSet.TOP, fileDescriptionTextView.id, ConstraintSet.BOTTOM, 10)
+                constraintSet.applyTo(constraintLayout)
             }
-
-            backButton.visibility = View.VISIBLE
-            editButton.visibility = View.VISIBLE
-            confirmEditButton.visibility = View.GONE
-            cancelEditButton.visibility = View.GONE
-
-            fileNameTextView.text = imageName
-            fileNameTextView.visibility = View.VISIBLE
-            fileNameEditText.visibility = View.GONE
-
-            fileYearTextView.text = imageYear.toString()
-            fileYearTextView.visibility = View.VISIBLE
-            fileYearEditText.visibility = View.GONE
-
-            filePlaceTextView.text = imagePlace
-            filePlaceTextView.visibility = View.VISIBLE
-            filePlaceEditText.visibility = View.GONE
-
-            fileEventTextView.text = imageEvent
-            fileEventTextView.visibility = View.VISIBLE
-            fileEventEditText.visibility = View.GONE
-
-            fileDescriptionTextView.text = imageDescription
-            fileDescriptionTextView.visibility = View.VISIBLE
-            fileDescriptionEditText.visibility = View.GONE
-
-            filePersonTextView.text = imagePerson
-            filePersonTextView.visibility = View.VISIBLE
-            filePersonEditText.visibility = View.GONE
-
-            filePriorityTextView.text = imagePriority
-            filePriorityTextView.visibility = View.VISIBLE
-            prioritySpinner.visibility = View.GONE
-
-            fileTagsTextView.text = tags.toString()
-            fileTagsTextView.visibility = View.VISIBLE
-            fileTagsEditText.visibility = View.GONE
-
-            filePictureImageView.visibility = View.VISIBLE
-            fileCreatedAtTextView.visibility = View.VISIBLE
-            fileCreatedTitle.visibility = View.VISIBLE
-
-            tagsChipGroup.visibility = View.GONE
-
-            val constraintSet = ConstraintSet()
-            constraintSet.clone(constraintLayout)
-
-            constraintSet.connect(filePersonTitleTextView.id, ConstraintSet.TOP, fileDescriptionTextView.id, ConstraintSet.BOTTOM, 10)
-
-            constraintSet.applyTo(constraintLayout)
         }
 
         cancelEditButton.setOnClickListener {
@@ -351,6 +499,34 @@ class PictureFragmentActivity : Fragment() {
 
                 constraintSet.applyTo(constraintLayout)
             }
+            else{
+                backButton.visibility = View.VISIBLE
+                editButton.visibility = View.VISIBLE
+                confirmEditButton.visibility = View.GONE
+                cancelEditButton.visibility = View.GONE
+
+                fileDescriptionTextView.visibility = View.VISIBLE
+                fileDescriptionEditText.visibility = View.GONE
+
+                filePriorityTextView.visibility = View.VISIBLE
+                prioritySpinner.visibility = View.GONE
+
+                fileTagsTextView.visibility = View.VISIBLE
+                fileTagsEditText.visibility = View.GONE
+
+                filePictureImageView.visibility = View.VISIBLE
+                fileCreatedAtTextView.visibility = View.VISIBLE
+                fileCreatedTitle.visibility = View.VISIBLE
+
+                tagsChipGroup.visibility = View.GONE
+
+                val constraintSet = ConstraintSet()
+                constraintSet.clone(constraintLayout)
+                val priorityTitleTextView: TextView = view.findViewById(R.id.priority_title)
+
+                constraintSet.connect(priorityTitleTextView.id, ConstraintSet.TOP, fileDescriptionTextView.id, ConstraintSet.BOTTOM, 10)
+                constraintSet.applyTo(constraintLayout)
+            }
         }
 
 
@@ -370,6 +546,34 @@ class PictureFragmentActivity : Fragment() {
             setOnCloseIconClickListener { chipGroup.removeView(this) }
         }
         chipGroup.addView(chip)
+    }
+
+    private fun addTagToFirebaseIfNotExists(tagName: String) {
+        val userId = mAuth.currentUser?.uid ?: return // Return early if user ID is null
+        // Query to check if the tag already exists
+        db.collection("tags")
+            .whereEqualTo("uid", userId)
+            .whereEqualTo("tagName", tagName)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (documents.isEmpty) {
+                    // The tag doesn't exist, add it
+                    val newTag = hashMapOf(
+                        "uid" to userId,
+                        "tagName" to tagName
+                    )
+                    db.collection("tags")
+                        .add(newTag)
+                        .addOnSuccessListener {
+                            // Successfully added new tag
+                            Toast.makeText(context, "New tag added: $tagName", Toast.LENGTH_SHORT).show()
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(context, "Error adding tag: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                }
+            }
     }
 
     companion object {

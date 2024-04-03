@@ -280,6 +280,7 @@
         android:paddingHorizontal="5dp"
         android:visibility="gone"
         android:textSize="25sp"
+        android:inputType="text"
         app:layout_constraintStart_toEndOf="@id/guideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/tags_title"
