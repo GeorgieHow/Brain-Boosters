@@ -1,6 +1,8 @@
 package com.example.brainboosters
 
+import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -16,6 +18,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.google.android.material.chip.Chip
@@ -125,7 +128,6 @@ class PictureFragmentActivity : Fragment() {
             if (position >= 0) prioritySpinner.setSelection(position)
         }
 
-
         val constraintLayout = view.findViewById<ConstraintLayout>(R.id.picture_constraint_layout)
 
         if(imageType == "family album"){
@@ -149,6 +151,9 @@ class PictureFragmentActivity : Fragment() {
         val editButton: Button = view.findViewById(R.id.edit_button)
         val confirmEditButton: Button = view.findViewById(R.id.confirm_edit_button)
         val cancelEditButton: Button = view.findViewById(R.id.cancel_button)
+        val deletePictureButton: Button = view.findViewById(R.id.delete_picture_button)
+
+        deletePictureButton.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.errorColor))
 
         fileTagsEditText.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -174,6 +179,7 @@ class PictureFragmentActivity : Fragment() {
                 editButton.visibility = View.GONE
                 confirmEditButton.visibility = View.VISIBLE
                 cancelEditButton.visibility = View.VISIBLE
+                deletePictureButton.visibility = View.VISIBLE
 
                 fileNameTextView.visibility = View.GONE
                 fileNameEditText.visibility = View.VISIBLE
@@ -232,6 +238,7 @@ class PictureFragmentActivity : Fragment() {
                 editButton.visibility = View.GONE
                 confirmEditButton.visibility = View.VISIBLE
                 cancelEditButton.visibility = View.VISIBLE
+                deletePictureButton.visibility = View.VISIBLE
 
                 fileDescriptionTextView.visibility = View.GONE
                 fileDescriptionEditText.visibility = View.VISIBLE
@@ -329,6 +336,7 @@ class PictureFragmentActivity : Fragment() {
                 editButton.visibility = View.VISIBLE
                 confirmEditButton.visibility = View.GONE
                 cancelEditButton.visibility = View.GONE
+                deletePictureButton.visibility = View.GONE
 
                 fileNameTextView.text = imageName
                 fileNameTextView.visibility = View.VISIBLE
@@ -426,6 +434,7 @@ class PictureFragmentActivity : Fragment() {
                 editButton.visibility = View.VISIBLE
                 confirmEditButton.visibility = View.GONE
                 cancelEditButton.visibility = View.GONE
+                deletePictureButton.visibility = View.GONE
 
                 fileDescriptionTextView.text = imageDescription
                 fileDescriptionTextView.visibility = View.VISIBLE
@@ -454,6 +463,53 @@ class PictureFragmentActivity : Fragment() {
             }
         }
 
+        deletePictureButton.setOnClickListener {
+            val imageId = arguments?.getString(ARG_IMAGE_ID) ?: return@setOnClickListener
+
+            // Start by deleting the picture from the 'images' collection
+            db.collection("images").document(imageId)
+                .delete()
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Image successfully deleted", Toast.LENGTH_SHORT).show()
+
+                    // Now find related quizzes in 'quizImageLinks' using the imageId
+                    db.collection("quizImageLinks")
+                        .whereEqualTo("imageId", imageId)
+                        .get()
+                        .addOnSuccessListener { documents ->
+                            for (document in documents) {
+                                // For each quizImageLink, get the quizId and delete the related quiz
+                                val quizId = document.getString("quizId") ?: continue
+                                db.collection("quizzes").document(quizId)
+                                    .delete()
+                                    .addOnSuccessListener {
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.e("DeleteQuiz", "Error deleting related quiz", e)
+                                    }
+
+                                // Also delete the quizImageLink document itself
+                                db.collection("quizImageLinks").document(document.id)
+                                    .delete()
+                                    .addOnSuccessListener {
+                                        // Successfully deleted quizImageLink document
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.e("DeleteLink", "Error deleting quiz image link", e)
+                                    }
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("FindQuizLinks", "Error finding quiz image links", e)
+                        }
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(context, "Error deleting image: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+
+            (activity as HomePageActivity).changeFragment(galleryFragment)
+        }
+
         cancelEditButton.setOnClickListener {
             if(imageType == "quiz") {
 
@@ -461,6 +517,7 @@ class PictureFragmentActivity : Fragment() {
                 editButton.visibility = View.VISIBLE
                 confirmEditButton.visibility = View.GONE
                 cancelEditButton.visibility = View.GONE
+                deletePictureButton.visibility = View.GONE
 
                 fileNameTextView.visibility = View.VISIBLE
                 fileNameEditText.visibility = View.GONE
@@ -504,6 +561,7 @@ class PictureFragmentActivity : Fragment() {
                 editButton.visibility = View.VISIBLE
                 confirmEditButton.visibility = View.GONE
                 cancelEditButton.visibility = View.GONE
+                deletePictureButton.visibility = View.GONE
 
                 fileDescriptionTextView.visibility = View.VISIBLE
                 fileDescriptionEditText.visibility = View.GONE
