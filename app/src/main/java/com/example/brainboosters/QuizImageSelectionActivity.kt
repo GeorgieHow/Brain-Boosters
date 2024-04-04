@@ -3,6 +3,8 @@ package com.example.brainboosters
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -66,6 +68,10 @@ class QuizImageSelectionActivity : Fragment(){
                     putExtra("quizType", quizType)
                 }
                 startActivity(intent)
+
+                val homePage = HomeFragmentActivity()
+                (activity as? HomePageActivity)?.changeFragment(homePage)
+
             }
             else{
                 Toast.makeText(context, "Must pick at least 1 picture for the quiz",

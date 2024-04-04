@@ -20,6 +20,16 @@ class FamilyAlbumAdapter(private val items: MutableList<Any>) : RecyclerView.Ada
         }
     }
 
+    fun numberOfHeadersBefore(position: Int): Int {
+        var headerCount = 0
+        for (i in 0 until position) {
+            if (isHeader(i)) {
+                headerCount++
+            }
+        }
+        return headerCount
+    }
+
     fun isHeader(position: Int): Boolean {
         return items[position] is String // Assuming headers are of type String
     }
@@ -58,9 +68,19 @@ class FamilyAlbumAdapter(private val items: MutableList<Any>) : RecyclerView.Ada
 
     class HeaderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val title: TextView = view.findViewById(R.id.header_title)
+
         fun bind(header: String) {
             title.text = header
+            itemView.setOnClickListener {
+            }
         }
+    }
+    fun countHeadersUpTo(position: Int): Int {
+        var headerCount = 0
+        for (i in 0 until position) {
+            if (isHeader(i)) headerCount++
+        }
+        return headerCount
     }
 
     class PhotoViewHolder(view: View) : RecyclerView.ViewHolder(view) {

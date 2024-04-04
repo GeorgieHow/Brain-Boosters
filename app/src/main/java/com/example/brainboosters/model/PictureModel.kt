@@ -15,7 +15,8 @@ data class PictureModel(
     val imageEvent: String? = null,
     val imageDescription: String? = null,
     val imageYear: Int? = null,
-    val timestamp: Timestamp? = null
+    val timestamp: Timestamp? = null,
+
 
 ) : Parcelable {
     constructor(parcel: Parcel) : this(

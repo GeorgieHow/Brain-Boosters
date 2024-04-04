@@ -1,6 +1,7 @@
 package com.example.brainboosters
 
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -12,10 +13,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.brainboosters.adapter.FamilyAlbumAdapter
 import com.example.brainboosters.model.PictureModel
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import java.util.Calendar
 import java.util.Date
+import java.util.Timer
+import kotlin.concurrent.schedule
 
 
 class FamilyAlbumActivity : Fragment(){
@@ -26,6 +31,8 @@ class FamilyAlbumActivity : Fragment(){
 
     private var adapter = FamilyAlbumAdapter(mutableListOf())
     val imageList = mutableListOf<PictureModel>()
+    val positionToImageListIndexMap = hashMapOf<Int, Int>()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -56,6 +63,7 @@ class FamilyAlbumActivity : Fragment(){
         recyclerView.adapter = adapter
         fetchImages()
 
+
         val backButton = view.findViewById<Button>(R.id.back_button)
         val homePage = HomeFragmentActivity()
         backButton.setOnClickListener {
@@ -64,20 +72,8 @@ class FamilyAlbumActivity : Fragment(){
 
         adapter.setOnItemClickListener(object: FamilyAlbumAdapter.OnItemClickListener {
             override fun onItemClick(position: Int) {
-
-                Log.wtf("ItemClick", "Position: $position, URL: ${imageList[position].imageUrl}")
-                // Existing logic...
-
-                var adjustedPosition = position
-                for (i in 0 until position) {
-                    if (adapter.isHeader(i)) {
-                        adjustedPosition-- // Decrement for each header before the clicked position
-                    }
-                }
-
-                // Use 'adjustedPosition' to access 'imageList'
-                if (adjustedPosition >= 0 && adjustedPosition < imageList.size) {
-                    val selectedPicture = imageList[adjustedPosition]
+                positionToImageListIndexMap[position]?.let { imageListIndex ->
+                    val selectedPicture = imageList[imageListIndex]
                     val selectedPictureID = selectedPicture.documentId
 
                     if (selectedPictureID != null) {
@@ -87,7 +83,8 @@ class FamilyAlbumActivity : Fragment(){
                             .addOnSuccessListener { documentSnapshot ->
                                 val imageUrl = documentSnapshot.getString("imageUrl")
                                 val pictureId = documentSnapshot.id
-                                val imageDescription = documentSnapshot.getString("description")
+                                val imageDescription =
+                                    documentSnapshot.getString("description")
                                 val timestamp = documentSnapshot.getTimestamp("createdAt")
 
                                 Log.wtf("HELP", "Clickable: $position Picture: $imageUrl")
@@ -112,15 +109,17 @@ class FamilyAlbumActivity : Fragment(){
                                 } ?: FamilyAlbumActivity()
 
 
-
                                 // Replace the current fragment with the detail fragment
-                                (activity as HomePageActivity).changeFragment(familyAlbumPictureFragment)
+                                (activity as HomePageActivity).changeFragment(
+                                    familyAlbumPictureFragment
+                                )
                             }
                     }
                 }
             }
         })
     }
+
 
     private fun fetchImages() {
         val currentUserID = mAuth.currentUser?.uid ?: return
@@ -150,23 +149,40 @@ class FamilyAlbumActivity : Fragment(){
                 }
                 val groupedPictures = groupPicturesByMonth(imageList)
                 adapter.updateData(groupedPictures)
+                updatePositionMapping(groupedPictures)
+                Log.d("FetchImages", "Final grouped items count: ${groupedPictures.size}")
+
             }
             .addOnFailureListener { exception ->
                 // Handle any errors here
             }
+
+
+    }
+    private fun updatePositionMapping(groupedItems: List<Any>) {
+        positionToImageListIndexMap.clear()
+        var photoIndex = 0 // Index for imageList
+        groupedItems.forEachIndexed { index, item ->
+            if (item is PictureModel) {
+                positionToImageListIndexMap[index] = photoIndex++
+            }
+            // Headers are ignored in the mapping
+        }
     }
 
     private fun groupPicturesByMonth(pictures: List<PictureModel>): List<Any> {
         val formatter = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault())
+
         val grouped = pictures.groupBy {
             formatter.format(it.timestamp?.toDate() ?: Date())
         }
 
         val groupedItems = mutableListOf<Any>()
         grouped.forEach { (month, photos) ->
-            groupedItems.add(month) // The month header
-            groupedItems.addAll(photos) // The photos within that month
+            groupedItems.add(month)
+            groupedItems.addAll(photos)
         }
+        Log.d("Grouping", "Grouped Items: ${grouped.keys.joinToString()}")
         return groupedItems
     }
 }

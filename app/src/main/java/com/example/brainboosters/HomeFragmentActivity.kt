@@ -69,6 +69,9 @@ class HomeFragmentActivity : Fragment() {
         val familyAlbumQuizButton = findViewById<Button>(R.id.family_album_button)
         familyAlbumQuizButton.setBackgroundColor(Color.parseColor("#917C9F"))
 
+        val quizResultsButton = findViewById<Button>(R.id.quiz_results_button)
+        quizResultsButton.setBackgroundColor(Color.parseColor("#FAC898"))
+
         val quizImageSelection = QuizImageSelectionActivity()
         startGenerateQuizButton.setOnClickListener {
             (activity as HomePageActivity).changeFragment(quizImageSelection)
@@ -77,6 +80,11 @@ class HomeFragmentActivity : Fragment() {
         val familyAlbum = FamilyAlbumActivity()
         familyAlbumQuizButton.setOnClickListener {
             (activity as HomePageActivity).changeFragment(familyAlbum)
+        }
+
+        val previousQuizResultsFragment = PreviousQuizResultsFragment()
+        quizResultsButton.setOnClickListener {
+            (activity as HomePageActivity).changeFragment(previousQuizResultsFragment)
         }
 
         // Using coroutine to perform database operation on a background thread

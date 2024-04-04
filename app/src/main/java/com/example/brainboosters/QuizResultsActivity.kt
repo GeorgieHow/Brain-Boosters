@@ -202,6 +202,10 @@ class QuizResultsActivity : AppCompatActivity(){
                     putString("LastFragment", "HomeFragment") // Use a key like "LastFragment" to remember the desired fragment
                     apply()
                 }
+
+                val returnIntent = Intent()
+                returnIntent.putExtra("fromQuizResults", true)
+                setResult(Activity.RESULT_OK, returnIntent)
                 finish()
 
             } catch (e: Exception) {
