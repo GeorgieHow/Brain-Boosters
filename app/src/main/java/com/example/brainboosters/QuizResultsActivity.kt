@@ -48,6 +48,11 @@ class QuizResultsActivity : AppCompatActivity(){
         questionsRight = intent.getIntExtra("questionsRight", 0)
         questionsWrong = intent.getIntExtra("questionsWrong", 0)
 
+        //Full Question Details Unpacked
+        var questionAttemptsJson = intent.getStringExtra("questionAttemptsJson")?: ""
+        val type = object : TypeToken<List<QuestionAttempt>>() {}.type
+        val questionAttempts: List<QuestionAttempt> = gson.fromJson(questionAttemptsJson, type)
+
         val questionsRightTextView = findViewById<TextView>(R.id.no_right_text)
         val questionsWrongTextView = findViewById<TextView>(R.id.no_wrong_text)
 
@@ -61,7 +66,10 @@ class QuizResultsActivity : AppCompatActivity(){
 
         uploadQuizToDB(object : QuizUploadCallback {
             override fun onQuizUploaded(quizId: String) {
-                // Assuming selectedPictures contains the image IDs
+                //Change quizid on attempts to quiz id just uploaded
+                val attemptsWithQuizId = questionAttempts.map { it.copy(quizId = quizId) }
+                uploadQuestionAttempts(attemptsWithQuizId)
+
                 val imageIds = selectedPictures.map { it.documentId}
                 addQuizImageLink(quizId, imageIds)
             }
@@ -212,6 +220,30 @@ class QuizResultsActivity : AppCompatActivity(){
                 Log.w("QuizResultsActivity", "Error updating quiz details", e)
             }
         } ?: Log.e("QuizResultsActivity", "Quiz ID is null. Cannot update quiz details.")
+    }
+
+    private fun uploadQuestionAttempts(questionAttempts: List<QuestionAttempt>) {
+        val db = FirebaseFirestore.getInstance()
+
+        // Optional: Use a batch if you want to upload all attempts atomically
+        val batch = db.batch()
+
+        questionAttempts.forEach { attempt ->
+            // Create a new document reference for each attempt in the "questionAttempts" collection
+            val docRef = db.collection("questions").document()
+
+            // Convert your QuestionAttempt object into a Map or let Firestore handle the serialization
+            batch.set(docRef, attempt)
+        }
+
+        // Commit the batch
+        batch.commit().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Log.d("Firestore", "Question attempts uploaded successfully")
+            } else {
+                Log.e("Firestore", "Error uploading question attempts", task.exception)
+            }
+        }
     }
 
 

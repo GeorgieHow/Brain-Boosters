@@ -22,6 +22,7 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.example.brainboosters.accessibility.AccessibleZoomImageView
 import com.google.common.reflect.TypeToken
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
 import java.util.Locale
@@ -41,10 +42,24 @@ data class Question(
     val options: List<String?>,
     val correctAnswer: String?,
     val pictureModel: PictureModel,
-    val questionType: QuestionType
+    val questionType: QuestionType,
+    val questionArea: String
+)
+
+data class QuestionAttempt(
+    val uid: String,
+    val quizId: String,
+    val questionText: String,
+    val correctAnswer: String?,
+    val userAnswer: String?,
+    val questionType: QuestionType,
+    val questionArea: String,
+    val isCorrect: Boolean
 )
 
 class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
+
+    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: "N/A"
 
     private val activityScope = CoroutineScope(Job() + Dispatchers.Main)
 
@@ -63,6 +78,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private var correctAnswersCountMap: MutableMap<String, Int> = mutableMapOf()
     private var incorrectAnswersCountMap: MutableMap<String, Int> = mutableMapOf()
+
+    private var questionAttempts = mutableListOf<QuestionAttempt>()
 
     private val config = fakerConfig { locale = "en-GB" }
     private val faker = Faker(config)
@@ -225,7 +242,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         options = optionsListPlace,
                         correctAnswer = picture.imagePlace,
                         pictureModel = picture,
-                        questionType = QuestionType.LONG_TERM
+                        questionType = QuestionType.LONG_TERM,
+                        questionArea = "place"
                     )
                 )
 
@@ -235,7 +253,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         options = optionsListYear,
                         correctAnswer = picture.imageYear.toString(),
                         pictureModel = picture,
-                        questionType = QuestionType.LONG_TERM
+                        questionType = QuestionType.LONG_TERM,
+                        questionArea = "year"
                     )
                 )
 
@@ -245,7 +264,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         options = optionsListEvent,
                         correctAnswer = picture.imageYear.toString().toString(),
                         pictureModel = picture,
-                        questionType = QuestionType.LONG_TERM
+                        questionType = QuestionType.LONG_TERM,
+                        questionArea = "event"
                     )
                 )
 
@@ -270,7 +290,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             options = optionsListWho,
                             correctAnswer = person,
                             pictureModel = picture,
-                            questionType = QuestionType.LONG_TERM
+                            questionType = QuestionType.LONG_TERM,
+                            questionArea = "who"
                         )
                     )
                 }
@@ -303,7 +324,10 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         "event" -> "What event was taking place?"
                         else -> ""
                     }
-                    val question = Question(questionText, options, correctAnswer, picture, QuestionType.LONG_TERM)
+
+                    val questionArea = category
+
+                    val question = Question(questionText, options, correctAnswer, picture, QuestionType.LONG_TERM, category)
                     allQuestions.add(question)
                     usedQuestions.add(category)
                     usedQuestionsForPicture[picture.documentId ?: return] = usedQuestions
@@ -355,7 +379,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             options = options,
             correctAnswer = rememberNumber,
             pictureModel = PictureModel.EMPTY, // Use the placeholder for consistency
-            questionType = QuestionType.SHORT_TERM
+            questionType = QuestionType.SHORT_TERM,
+            questionArea = "number"
         )
 
         // Assuming 'questions' is your list of quiz questions
@@ -409,6 +434,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             val correctAnswerJson = gson.toJson(correctAnswersCountMap)
             val incorrectAnswerJson = gson.toJson(incorrectAnswersCountMap)
+            val questionAttemptsJson = gson.toJson(questionAttempts)
 
             val intent = Intent(this, QuizResultsActivity::class.java).apply{
                 putExtra("questionsRight", questionsRight)
@@ -417,7 +443,10 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 putExtra("correctAnswerJson", correctAnswerJson)
                 putExtra("incorrectAnswerJson", incorrectAnswerJson)
 
+                putExtra("questionAttemptsJson", questionAttemptsJson)
+
                 putParcelableArrayListExtra("selectedPictures", ArrayList(selectedPictures))
+
 
             }
             startActivity(intent)
@@ -547,6 +576,19 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun evaluateAnswer(selectedAnswer: String, button: Button) {
         val currentQuestion = questions[currentQuestionIndex]
+
+        val isCorrect = selectedAnswer == currentQuestion.correctAnswer
+        val attempt = QuestionAttempt(
+            uid = uid,
+            quizId = "",
+            questionText = currentQuestion.questionText,
+            correctAnswer = currentQuestion.correctAnswer,
+            userAnswer = selectedAnswer,
+            questionType = currentQuestion.questionType,
+            questionArea = currentQuestion.questionArea,
+            isCorrect = isCorrect
+        )
+        questionAttempts.add(attempt)
 
         val answerButtons = getListOfButtons()
 
