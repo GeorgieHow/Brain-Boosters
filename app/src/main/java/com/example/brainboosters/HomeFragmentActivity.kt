@@ -3,7 +3,6 @@ package com.example.brainboosters
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,7 +14,6 @@ import com.example.brainboosters.model.PictureModel
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -82,7 +80,7 @@ class HomeFragmentActivity : Fragment() {
             (activity as HomePageActivity).changeFragment(familyAlbum)
         }
 
-        val previousQuizResultsFragment = PreviousQuizResultsFragment()
+        val previousQuizResultsFragment = PreviousQuizResultsFragmentActivity()
         quizResultsButton.setOnClickListener {
             (activity as HomePageActivity).changeFragment(previousQuizResultsFragment)
         }

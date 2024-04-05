@@ -68,7 +68,11 @@ class HomePageActivity : AppCompatActivity() {
         }
     }
 
-    fun changeFragment(fragment: Fragment) {
+    fun changeFragment(fragment: Fragment, bundle: Bundle? = null) {
+        bundle?.let {
+            fragment.arguments = it
+        }
+
         isUploadFragmentPart2Displayed = fragment is UploadFragmentPart2Activity
         supportFragmentManager.beginTransaction().replace(R.id.fragmentContainerView, fragment).commit()
     }
