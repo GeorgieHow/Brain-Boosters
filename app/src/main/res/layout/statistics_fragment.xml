@@ -38,5 +38,39 @@
             app:layout_constraintTop_toBottomOf="@id/statistics_title"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
+        <TextView
+            android:id="@+id/statistics_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:text="View Statistics Here:"
+            android:textSize="25dp"
+            app:layout_constraintTop_toTopOf="@id/statistics_menu"
+            app:layout_constraintStart_toStartOf="@id/statistics_menu"/>
+
+        <TextView
+            android:id="@+id/bar_chart_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="30dp"
+            android:text="No. of Quizzes"
+            android:textSize="25dp"
+            android:rotation="-90"
+            app:layout_constraintTop_toTopOf="@id/barChart"
+            app:layout_constraintBottom_toBottomOf="@id/barChart"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <com.github.mikephil.charting.charts.BarChart
+            android:id="@+id/barChart"
+            android:layout_width="0dp"
+            android:layout_height="280dp"
+            android:layout_marginVertical="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginStart="50dp"
+            app:layout_constraintTop_toBottomOf="@id/statistics_message"
+            app:layout_constraintStart_toStartOf="@id/statistics_menu"
+            app:layout_constraintEnd_toEndOf="@id/statistics_menu"
+            app:layout_constraintVertical_chainStyle="packed"/>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>

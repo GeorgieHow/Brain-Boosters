@@ -79,6 +79,9 @@ dependencies {
     //Kotlin-Faker
     implementation("io.github.serpro69:kotlin-faker:1.16.0")
 
+    //MPAndroid Chart
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.activity:activity-compose:1.8.2")

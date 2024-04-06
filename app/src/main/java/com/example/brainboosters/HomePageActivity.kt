@@ -56,7 +56,7 @@ class HomePageActivity : AppCompatActivity() {
                         changeFragment(favoriteFragment)
                     }
                     R.id.nav_statistics -> {
-                        val profileFragment = StatisticsFragment()
+                        val profileFragment = StatisticsFragmentActivity()
                         changeFragment(profileFragment)
                     }
                     R.id.nav_profile -> {
