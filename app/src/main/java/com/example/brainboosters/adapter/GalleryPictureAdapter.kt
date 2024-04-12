@@ -46,6 +46,7 @@ class GalleryPictureAdapter(private val context: Context,
         holder.itemView.setOnClickListener {
             itemClickListener.onItemClick(position)
         }
-
     }
+
+
 }

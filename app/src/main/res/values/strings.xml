@@ -25,6 +25,7 @@
 
     <string-array name="time_options">
         <item>Week View</item>
-        <item>Month View</item>
+        <item>Current Month View</item>
+        <item>Past Months View</item>
     </string-array>
 </resources>

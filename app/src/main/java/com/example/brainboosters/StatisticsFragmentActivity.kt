@@ -79,6 +79,9 @@ class StatisticsFragmentActivity : Fragment() {
                         plotWeeklyLineChart(results, longTermLineChart)
                     }
                     1 -> getFirebaseDataForLongTermQuestions { results ->
+                        plotCurrentMonthWeeklyChart(results, longTermLineChart)
+                    }
+                    2 -> getFirebaseDataForLongTermQuestions { results ->
                         plotMonthlyLineChart(results, longTermLineChart)
                     }
                 }
@@ -114,6 +117,9 @@ class StatisticsFragmentActivity : Fragment() {
                         plotWeeklyLineChart(results, shortTermLineChart)
                     }
                     1 -> getFirebaseDataForShortTermQuestions { results ->
+                        plotCurrentMonthWeeklyChart(results, shortTermLineChart)
+                    }
+                    2 -> getFirebaseDataForShortTermQuestions { results ->
                         plotMonthlyLineChart(results, shortTermLineChart)
                     }
                 }
@@ -454,6 +460,87 @@ class StatisticsFragmentActivity : Fragment() {
         lineChart.axisLeft.apply {
             axisMinimum = 0f // Start at zero
             granularity = 1f // Interval of 1
+            isGranularityEnabled = true
+        }
+        lineChart.axisRight.isEnabled = false
+        lineChart.description.isEnabled = false
+
+        // Refresh the chart
+        lineChart.invalidate()
+    }
+
+    private fun plotCurrentMonthWeeklyChart(quizResults: Map<Long, Pair<Int, Int>>, lineChart: LineChart) {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.DAY_OF_MONTH, 1) // First day of the current month
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.clear(Calendar.MINUTE)
+        calendar.clear(Calendar.SECOND)
+        calendar.clear(Calendar.MILLISECOND)
+
+        val correctEntriesMap = mutableMapOf<Int, Entry>()
+        val incorrectEntriesMap = mutableMapOf<Int, Entry>()
+
+        // Initialize entries for each week of the month
+        for (week in 0 until 4) {
+            correctEntriesMap[week] = Entry(week.toFloat(), 0f)
+            incorrectEntriesMap[week] = Entry(week.toFloat(), 0f)
+        }
+
+        // Process quiz results
+        quizResults.forEach { (timestamp, counts) ->
+            calendar.timeInMillis = timestamp
+            val weekOfMonth = calendar.get(Calendar.WEEK_OF_MONTH) - 1 // 0-based index
+
+            if (weekOfMonth in 0..3) {
+                correctEntriesMap[weekOfMonth]?.let {
+                    it.y += counts.first.toFloat()
+                }
+                incorrectEntriesMap[weekOfMonth]?.let {
+                    it.y += counts.second.toFloat()
+                }
+            }
+        }
+
+        // Create data sets for the chart
+        val correctLineDataSet = LineDataSet(correctEntriesMap.values.toList(), "Correct Answers").apply {
+            color = Color.GREEN
+            valueTextColor = Color.BLACK
+            valueTextSize = 12f
+            valueFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(value: Float): String {
+                    return value.toInt().toString()
+                }
+            }
+        }
+
+        val incorrectLineDataSet = LineDataSet(incorrectEntriesMap.values.toList(), "Incorrect Answers").apply {
+            color = Color.RED
+            valueTextColor = Color.BLACK
+            valueTextSize = 12f
+            valueFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(value: Float): String {
+                    return value.toInt().toString()
+                }
+            }
+        }
+
+        val lineData = LineData(correctLineDataSet, incorrectLineDataSet)
+        lineChart.data = lineData
+
+        // Configure the x-axis
+        lineChart.xAxis.apply {
+            valueFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(value: Float): String {
+                    return "Week ${(value.toInt() + 1)}"
+                }
+            }
+            setLabelCount(4, true)
+        }
+
+        // Configure the rest of the chart
+        lineChart.axisLeft.apply {
+            axisMinimum = 0f
+            granularity = 1f
             isGranularityEnabled = true
         }
         lineChart.axisRight.isEnabled = false

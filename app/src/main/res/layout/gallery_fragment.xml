@@ -61,8 +61,33 @@
             android:layout_height="wrap_content"
             android:entries="@array/gallery_filters"
             android:background="@drawable/shadow_drawable"
-            app:layout_constraintTop_toTopOf="@id/gallery_menu"
+            app:layout_constraintTop_toBottomOf="@id/app_bar_layout"
             app:layout_constraintEnd_toEndOf="@id/gallery_menu" />
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/app_bar_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginHorizontal="15dp"
+            android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+            app:layout_constraintStart_toStartOf="@id/gallery_menu"
+            app:layout_constraintTop_toTopOf="@id/gallery_menu"
+            app:layout_constraintEnd_toEndOf="@id/gallery_menu">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize">
+
+                <androidx.appcompat.widget.SearchView
+                    android:id="@+id/search_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:iconifiedByDefault="false" />
+
+            </com.google.android.material.appbar.MaterialToolbar>
+        </com.google.android.material.appbar.AppBarLayout>
 
         <Button
             android:id="@+id/upload_button"
