@@ -1,10 +1,14 @@
 package com.example.brainboosters
 
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.github.mikephil.charting.charts.BarChart
@@ -31,26 +35,101 @@ class StatisticsFragmentActivity : Fragment() {
     private var mAuth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
     private lateinit var moodChart: BarChart
-    private lateinit var quizResultsLineChart: LineChart
+    private lateinit var longTermLineChart: LineChart
+    private lateinit var shortTermLineChart: LineChart
     private lateinit var quizCount: TextView
     private var count: Int = 0
 
-    private val quizResults = mutableMapOf<Long, Int>()
+    private val longTermQuizResults = mutableMapOf<Long, Pair<Int, Int>>()
+    private val shortTermQuizResults = mutableMapOf<Long, Pair<Int, Int>>()
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View?
             = inflater.inflate(R.layout.statistics_fragment, container, false).apply {
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        moodChart = view.findViewById(R.id.barChart)
+
+        longTermLineChart = view.findViewById(R.id.long_term_line_chart)
+        shortTermLineChart = view.findViewById(R.id.short_term_line_chart)
+
+        val longTermlineChartSpinner = view.findViewById<Spinner>(R.id.long_term_line_chart_spinner)
+
+        val longTermAdapter: ArrayAdapter<CharSequence> = ArrayAdapter.createFromResource(
+            requireContext(),
+            R.array.time_options, // The array resource containing your items
+            R.layout.spinner_item // Custom layout for items
+        )
+        longTermAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+        longTermlineChartSpinner.adapter = longTermAdapter
+
+        longTermlineChartSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                when (position) {
+                    0 -> getFirebaseDataForLongTermQuestions { results ->
+                        plotWeeklyLineChart(results, longTermLineChart)
+                    }
+                    1 -> getFirebaseDataForLongTermQuestions { results ->
+                        plotMonthlyLineChart(results, longTermLineChart)
+                    }
+                }
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+                getFirebaseDataForLongTermQuestions { results ->
+                    plotWeeklyLineChart(results, longTermLineChart)
+                }
+            }
+        }
+
+        val shortTermlineChartSpinner = view.findViewById<Spinner>(R.id.short_term_line_chart_spinner)
+
+        val shortTermAdapter: ArrayAdapter<CharSequence> = ArrayAdapter.createFromResource(
+            requireContext(),
+            R.array.time_options, // The array resource containing your items
+            R.layout.spinner_item // Custom layout for items
+        )
+        shortTermAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+        shortTermlineChartSpinner.adapter = shortTermAdapter
+
+        shortTermlineChartSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                when (position) {
+                    0 -> getFirebaseDataForShortTermQuestions { results ->
+                        plotWeeklyLineChart(results, shortTermLineChart)
+                    }
+                    1 -> getFirebaseDataForShortTermQuestions { results ->
+                        plotMonthlyLineChart(results, shortTermLineChart)
+                    }
+                }
+            }
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+                getFirebaseDataForShortTermQuestions { results ->
+                    plotWeeklyLineChart(results, shortTermLineChart)
+                }
+            }
+        }
+
+        moodChart = view.findViewById(R.id.mood_bar_chart)
         quizCount = view.findViewById(R.id.total_quiz_text)
-        quizResultsLineChart = view.findViewById(R.id.lineChart)
+
         getFirebaseDataForMood()
-        getFirebaseDataForLongTermQuestions()
     }
 
     private fun getFirebaseDataForMood(){
@@ -86,7 +165,16 @@ class StatisticsFragmentActivity : Fragment() {
             BarEntry(index.toFloat(), entry.value.toFloat())
         }
 
+        val barColors = listOf(
+            Color.parseColor("#4CAF50"),
+            Color.parseColor("#2196F3"),
+            Color.parseColor("#F44336"),
+            Color.parseColor("#FFEB3B"),
+            Color.parseColor("#9C27B0")
+        )
+
         val dataSet = BarDataSet(entries, "Mood Counts").apply{
+            setColors(barColors)
             valueFormatter = object : ValueFormatter() {
                 override fun getBarLabel(barEntry: BarEntry?): String {
                     // Assuming you always have an integer value for the bars, return as an integer string
@@ -108,6 +196,7 @@ class StatisticsFragmentActivity : Fragment() {
             axisMinimum = 0f
         }
         moodChart.axisRight.isEnabled = false
+
 
         val moods = moodCounts.keys.toList()
         moodChart.xAxis.apply {
@@ -135,7 +224,7 @@ class StatisticsFragmentActivity : Fragment() {
         quizCount.text = quizTotalCount.toString()
     }
 
-    private fun getFirebaseDataForLongTermQuestions() {
+    private fun getFirebaseDataForLongTermQuestions(plotFunction: (Map<Long, Pair<Int, Int>>) -> Unit) {
         mAuth.currentUser?.uid?.let { currentUserUID ->
             db.collection("quizzes")
                 .whereEqualTo("uid", currentUserUID)
@@ -161,20 +250,23 @@ class StatisticsFragmentActivity : Fragment() {
                             .get()
                             .addOnSuccessListener { questionDocuments ->
                                 var correctLongTermCount = 0
+                                var incorrectLongTermCount = 0
 
                                 for (question in questionDocuments) {
                                     if (question.getBoolean("correct") == true) {
                                         correctLongTermCount++
+                                    } else {
+                                        incorrectLongTermCount++
                                     }
                                 }
 
-                                quizResults[quizTimestamp] = correctLongTermCount
+                                longTermQuizResults[quizTimestamp] = Pair(correctLongTermCount, incorrectLongTermCount)
                                 processedQuizzes++
 
                                 // Check if all quizzes have been processed
                                 if (processedQuizzes == quizCount) {
-                                    Log.d("Quiz Results", "$quizResults")
-                                    plotLineChart(quizResults)
+                                    Log.d("Quiz Results", "$longTermQuizResults")
+                                    plotFunction(longTermQuizResults)
                                 }
                             }
                             .addOnFailureListener { exception ->
@@ -183,8 +275,8 @@ class StatisticsFragmentActivity : Fragment() {
 
                                 // Still check if we need to plot due to other successes
                                 if (processedQuizzes == quizCount) {
-                                    plotLineChart(quizResults)
-                                    Log.d("Quiz Results", "$quizResults")
+                                    plotFunction(longTermQuizResults)
+                                    Log.d("Quiz Results", "$longTermQuizResults")
                                 }
                             }
                     }
@@ -195,9 +287,70 @@ class StatisticsFragmentActivity : Fragment() {
         }
     }
 
+    private fun getFirebaseDataForShortTermQuestions(plotFunction: (Map<Long, Pair<Int, Int>>) -> Unit) {
+        mAuth.currentUser?.uid?.let { currentUserUID ->
+            db.collection("quizzes")
+                .whereEqualTo("uid", currentUserUID)
+                .get()
+                .addOnSuccessListener { quizDocuments ->
+                    if (quizDocuments.isEmpty) {
+                        Log.d("Quiz Results", "No quizzes found for the user.")
+                        return@addOnSuccessListener
+                    }
 
+                    val quizCount = quizDocuments.size()
+                    var processedQuizzes = 0
 
-    private fun plotLineChart(quizResults: Map<Long, Int>) {
+                    for (quiz in quizDocuments) {
+                        val quizId = quiz.id
+                        val dateString = quiz.getString("date")
+                        val quizDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(dateString)
+                        val quizTimestamp = quizDate?.time ?: continue
+
+                        db.collection("questions")
+                            .whereEqualTo("quizId", quizId)
+                            .whereEqualTo("questionType", "SHORT_TERM")
+                            .get()
+                            .addOnSuccessListener { questionDocuments ->
+                                var correctLongTermCount = 0
+                                var incorrectLongTermCount = 0
+
+                                for (question in questionDocuments) {
+                                    if (question.getBoolean("correct") == true) {
+                                        correctLongTermCount++
+                                    } else {
+                                        incorrectLongTermCount++
+                                    }
+                                }
+
+                                shortTermQuizResults[quizTimestamp] = Pair(correctLongTermCount, incorrectLongTermCount)
+                                processedQuizzes++
+
+                                // Check if all quizzes have been processed
+                                if (processedQuizzes == quizCount) {
+                                    Log.d("Quiz Results", "$shortTermQuizResults")
+                                    plotFunction(shortTermQuizResults)
+                                }
+                            }
+                            .addOnFailureListener { exception ->
+                                Log.e("Firebase Error", "Error getting questions", exception)
+                                processedQuizzes++
+
+                                // Still check if we need to plot due to other successes
+                                if (processedQuizzes == quizCount) {
+                                    plotFunction(shortTermQuizResults)
+                                    Log.d("Quiz Results", "$shortTermQuizResults")
+                                }
+                            }
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("Firebase Error", "Error getting quizzes", exception)
+                }
+        }
+    }
+
+    private fun plotWeeklyLineChart(quizResults: Map<Long, Pair<Int,Int>>, lineChart: LineChart) {
         val calendar = Calendar.getInstance()
         // Set to the start of this week (Monday)
         calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
@@ -214,10 +367,8 @@ class StatisticsFragmentActivity : Fragment() {
         calendar.set(Calendar.SECOND, 59)
         val endOfWeekMillis = calendar.timeInMillis
 
-        // Filter the results to include only quizzes within the current week
-        val currentWeekQuizResults = quizResults.filterKeys {
-            it in startOfWeekMillis..endOfWeekMillis
-        }
+        val correctEntriesMap = mutableMapOf<Long, Entry>()
+        val incorrectEntriesMap = mutableMapOf<Long, Entry>()
 
         // Prepare the entries using a map to store counts for each day
         val entriesMap = mutableMapOf<Long, Entry>()
@@ -225,18 +376,29 @@ class StatisticsFragmentActivity : Fragment() {
         // Initialize the entries map with zeros for each day of the current week
         for (i in 0 until 7) {
             val dayMillis = startOfWeekMillis + TimeUnit.DAYS.toMillis(i.toLong())
-            entriesMap[dayMillis] = Entry(dayMillis.toFloat(), 0f)
+            correctEntriesMap[dayMillis] = Entry(dayMillis.toFloat(), 0f)   // Set zero for correct answers
+            incorrectEntriesMap[dayMillis] = Entry(dayMillis.toFloat(), 0f) // Set zero for incorrect answers
+        }
+
+        // Filter the results to include only quizzes within the current week
+        val currentWeekQuizResults = quizResults.filterKeys {
+            it in startOfWeekMillis..endOfWeekMillis
         }
 
         // Populate the entries map with actual quiz results, rounded to the nearest day
-        currentWeekQuizResults.forEach { (timestamp, count) ->
+        currentWeekQuizResults.forEach { (timestamp, counts) ->
             calendar.timeInMillis = timestamp
             calendar.set(Calendar.HOUR_OF_DAY, 0)
             calendar.clear(Calendar.MINUTE)
             calendar.clear(Calendar.SECOND)
             calendar.clear(Calendar.MILLISECOND)
             val roundedDayMillis = calendar.timeInMillis
-            entriesMap[roundedDayMillis]?.y = (entriesMap[roundedDayMillis]?.y ?: 0f) + count.toFloat()
+
+            val correctEntry = correctEntriesMap.getOrPut(roundedDayMillis) { Entry(roundedDayMillis.toFloat(), 0f) }
+            correctEntry.y += counts.first.toFloat()
+
+            val incorrectEntry = incorrectEntriesMap.getOrPut(roundedDayMillis) { Entry(roundedDayMillis.toFloat(), 0f) }
+            incorrectEntry.y += counts.second.toFloat()
         }
 
         val entries = entriesMap.values.sortedBy { it.x }
@@ -248,11 +410,35 @@ class StatisticsFragmentActivity : Fragment() {
             }
         }
 
-        val lineData = LineData(lineDataSet)
-        quizResultsLineChart.data = lineData
+        val correctLineDataSet = LineDataSet(correctEntriesMap.values.toList().sortedBy { it.x }, "Correct Answers").apply {
+            color = Color.GREEN
+            valueTextColor = Color.BLACK
+            valueTextSize = 12f
+            // Set the value formatter for the data set to ensure whole numbers
+            valueFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(value: Float): String {
+                    return value.toInt().toString()
+                }
+            }
+        }
+
+        val incorrectLineDataSet = LineDataSet(incorrectEntriesMap.values.toList().sortedBy { it.x }, "Incorrect Answers").apply {
+            color = Color.RED
+            valueTextColor = Color.BLACK
+            valueTextSize = 12f
+            // Set the value formatter for the data set to ensure whole numbers
+            valueFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(value: Float): String {
+                    return value.toInt().toString()
+                }
+            }
+        }
+
+        val lineData = LineData(correctLineDataSet, incorrectLineDataSet)
+        lineChart.data = lineData
 
         // Configure the x-axis
-        quizResultsLineChart.xAxis.apply {
+        lineChart.xAxis.apply {
             valueFormatter = object : ValueFormatter() {
                 private val dateFormat = SimpleDateFormat("EEE", Locale.getDefault())
                 override fun getFormattedValue(value: Float): String {
@@ -263,17 +449,112 @@ class StatisticsFragmentActivity : Fragment() {
             setLabelCount(7, true) // Display a label for each day
         }
 
+
         // Configure the y-axis
-        quizResultsLineChart.axisLeft.apply {
+        lineChart.axisLeft.apply {
             axisMinimum = 0f // Start at zero
             granularity = 1f // Interval of 1
             isGranularityEnabled = true
         }
-        quizResultsLineChart.axisRight.isEnabled = false
+        lineChart.axisRight.isEnabled = false
+        lineChart.description.isEnabled = false
 
         // Refresh the chart
-        quizResultsLineChart.invalidate()
+        lineChart.invalidate()
     }
+
+    private fun plotMonthlyLineChart(quizResults: Map<Long, Pair<Int, Int>>, lineChart: LineChart) {
+        val calendar = Calendar.getInstance()
+        // Set to the first day of six months ago
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        calendar.add(Calendar.MONTH, -6)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.clear(Calendar.MINUTE)
+        calendar.clear(Calendar.SECOND)
+        calendar.clear(Calendar.MILLISECOND)
+
+        // Initialize maps for correct and incorrect answers
+        val correctEntriesMap = mutableMapOf<Long, Entry>()
+        val incorrectEntriesMap = mutableMapOf<Long, Entry>()
+
+        // Iterate over the months, from six months ago to the current month
+        for (i in 0 until 6) {
+            val monthMillis = calendar.timeInMillis
+            correctEntriesMap[monthMillis] = Entry(i.toFloat(), 0f) // X value is the index for simplicity
+            incorrectEntriesMap[monthMillis] = Entry(i.toFloat(), 0f)
+            calendar.add(Calendar.MONTH, 1)
+        }
+
+        // Populate the entries with actual quiz results
+        quizResults.forEach { (timestamp, counts) ->
+            // Round the timestamp down to the first of the month
+            calendar.timeInMillis = timestamp
+            calendar.set(Calendar.DAY_OF_MONTH, 1)
+            calendar.set(Calendar.HOUR_OF_DAY, 0)
+            calendar.clear(Calendar.MINUTE)
+            calendar.clear(Calendar.SECOND)
+            calendar.clear(Calendar.MILLISECOND)
+            val roundedMonthMillis = calendar.timeInMillis
+
+            val index = ((roundedMonthMillis - correctEntriesMap.keys.first()) / (1000L * 60 * 60 * 24 * 30)).toFloat()
+            correctEntriesMap[roundedMonthMillis]?.apply { y = counts.first.toFloat() }
+            incorrectEntriesMap[roundedMonthMillis]?.apply { y = counts.second.toFloat() }
+        }
+
+        // Create datasets and set them to the chart
+        val correctLineDataSet = LineDataSet(correctEntriesMap.values.toList().sortedBy { it.x }, "Correct Answers").apply {
+            color = Color.GREEN
+            valueTextColor = Color.BLACK
+            valueTextSize = 12f
+            // Set the value formatter for the data set to ensure whole numbers
+            valueFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(value: Float): String {
+                    return value.toInt().toString()
+                }
+            }
+        }
+        val incorrectLineDataSet = LineDataSet(incorrectEntriesMap.values.toList().sortedBy { it.x }, "Incorrect Answers").apply {
+            color = Color.RED
+            valueTextColor = Color.BLACK
+            valueTextSize = 12f
+            // Set the value formatter for the data set to ensure whole numbers
+            valueFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(value: Float): String {
+                    return value.toInt().toString()
+                }
+            }
+        }
+        val lineData = LineData(correctLineDataSet, incorrectLineDataSet)
+        lineChart.data = lineData
+
+        // Configure the x-axis with labels for each month
+        lineChart.xAxis.apply {
+            valueFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(value: Float): String {
+                    val calendar = Calendar.getInstance()
+                    calendar.add(Calendar.MONTH, -6)
+                    calendar.add(Calendar.MONTH, value.toInt()) // Add the number of months corresponding to the entry's x value
+                    val dateFormat = SimpleDateFormat("MMM yyyy", Locale.getDefault())
+                    return dateFormat.format(calendar.time)
+                }
+            }
+            position = XAxis.XAxisPosition.BOTTOM
+            setLabelCount(6, true)
+        }
+
+        // Rest of the chart configuration...
+        lineChart.axisLeft.apply {
+            axisMinimum = 0f
+            granularity = 1f
+            isGranularityEnabled = true
+        }
+        lineChart.axisRight.isEnabled = false
+        lineChart.description.isEnabled = false
+
+        // Refresh the chart
+        lineChart.invalidate()
+    }
+
 
     class DateValueFormatter : ValueFormatter() {
         private val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())

@@ -38,7 +38,6 @@ class VerticalTextView(context: Context, attrs: AttributeSet) : AppCompatTextVie
     }
 
     override fun onDraw(c: Canvas) {
-        //      c.drawColor(0xffffff80); // TEST
         if (layout == null)
             return
         c.withSave {
