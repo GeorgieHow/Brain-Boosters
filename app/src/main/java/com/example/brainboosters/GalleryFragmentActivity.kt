@@ -1,6 +1,8 @@
 package com.example.brainboosters
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -8,7 +10,7 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.SearchView
+import androidx.appcompat.widget.SearchView
 import android.widget.Spinner
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
@@ -27,6 +29,9 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
     private val db = FirebaseFirestore.getInstance()
     private val imageList = mutableListOf<PictureModel>()
 
+    private lateinit var adapter: GalleryPictureAdapter
+    private lateinit var searchView: SearchView
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View?
@@ -36,7 +41,7 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
+        Log.d("GalleryFragment", "Number of images fetched: ${imageList.size}")
 
         val uploadButton = view.findViewById<Button>(R.id.upload_button)
         val uploadFragment = UploadFragmentActivity()
@@ -46,7 +51,7 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
 
         val recyclerView: RecyclerView = view.findViewById(R.id.picture_recycler_view)
 
-        val adapter = GalleryPictureAdapter(requireContext(), imageList, this)
+        adapter = GalleryPictureAdapter(requireContext(), imageList, this)
 
         val layoutManager = GridLayoutManager(requireContext(), 3)
         recyclerView.layoutManager = layoutManager
@@ -74,10 +79,30 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
             }
         }
 
+        fetchImages("All", adapter)
+
+        searchView = view.findViewById(R.id.search_view)
+        searchView.isEnabled = false
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String): Boolean {
+                if (newText.isEmpty()) {
+                    fetchImages("All", adapter)
+                } else {
+                    adapter.filter(newText)  // Filter based on user input
+                }
+                return true
+            }
+        })
+
+
     }
 
     override fun onItemClick(position: Int) {
-        val selectedPicture = imageList[position]
+        val selectedPicture = adapter.getItemAt(position)
         val selectedPictureID = selectedPicture.documentId
 
         Log.d("Firebase", "$selectedPicture, and the id? $selectedPictureID")
@@ -167,7 +192,7 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
     }
 
     private fun fetchImages(filter: String, adapter: GalleryPictureAdapter) {
-        imageList.clear() // Clear existing images
+        imageList.clear()
 
         val query = when(filter) {
             "All" -> db.collection("images")
@@ -200,15 +225,18 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
 
                     val imageUrl = document.getString("imageUrl")
                     val pictureId = document.id
-
                     val imageDescription = document.getString("description")
+                    val tags = document.get("tags") as? List<String> ?: emptyList()
+
+                    Log.d("Tags","$tags")
 
                     if (imageUrl != null) {
                         if(photoType == "family album"){
                             imageList.add(PictureModel(
                                 imageUrl = imageUrl,
                                 documentId = pictureId,
-                                imageDescription = imageDescription
+                                imageDescription = imageDescription,
+                                tags = tags
                             ))
                         }else{
                             val imageName = document.getString("name")
@@ -218,12 +246,16 @@ class GalleryFragmentActivity : Fragment(), GalleryPictureAdapter.OnItemClickLis
                             val imageEvent = document.getString("event")
 
                             imageName?.let { PictureModel(imageUrl, it, pictureId, imagePerson,
-                                imagePlace, imageEvent, imageDescription, imageYear) }
+                                imagePlace, imageEvent, imageDescription, imageYear, null, tags) }
                                 ?.let { imageList.add(it) }
                         }
                     }
                 }
-                adapter.notifyDataSetChanged() // Notify adapter
+                adapter.setList(imageList)
+                adapter.notifyDataSetChanged()
+                searchView.isEnabled = true
+                Log.d("GalleryFragment", "Number of images fetched: ${imageList.size}")
+
             }
             .addOnFailureListener { exception ->
                 Log.wtf("TAG", "Error getting documents: ", exception)
