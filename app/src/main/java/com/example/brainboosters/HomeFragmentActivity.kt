@@ -1,25 +1,30 @@
 package com.example.brainboosters
 
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.brainboosters.model.PictureModel
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.SortedMap
 
 class HomeFragmentActivity : Fragment() {
 
@@ -75,6 +80,11 @@ class HomeFragmentActivity : Fragment() {
             (activity as HomePageActivity).changeFragment(quizImageSelection)
         }
 
+        val startPriorityQuizButton = findViewById<Button>(R.id.start_priority_quiz_button)
+        startPriorityQuizButton.setOnClickListener {
+            fetchAndStartPriorityQuiz()
+        }
+
         val familyAlbum = FamilyAlbumActivity()
         familyAlbumQuizButton.setOnClickListener {
             (activity as HomePageActivity).changeFragment(familyAlbum)
@@ -113,8 +123,53 @@ class HomeFragmentActivity : Fragment() {
 
     }
 
+    private fun fetchAndStartPriorityQuiz() {
+        db.collection("images")
+            .whereEqualTo("uid", mAuth.currentUser?.uid)
+            .orderBy("priority", Query.Direction.DESCENDING)
+            .get()
+            .addOnSuccessListener { documents ->
+                val sortedPictures = documents.mapNotNull { document ->
+                    val imageUrl = document.getString("imageUrl")
+                    val pictureId = document.id
+                    val imageName = document.getString("name")
+                    val imagePlace = document.getString("place")
+                    val imagePerson = document.getString("person")
+                    val imageYear = document.getLong("year")?.toInt()
+                    val imageEvent = document.getString("event")
+                    val imageDescription = document.getString("description")
+                    val imagePriority = document.getString("priority")
 
+                    if (imageUrl != null && imageName != null) {
+                        PictureModel(imageUrl, imageName, pictureId, imagePerson,
+                            imagePlace, imageEvent, imageDescription, imageYear, null, listOf(), imagePriority)
+                    } else null
+                }.sortedByDescending {
+                    when (it.imagePriority) {
+                        "High" -> 3
+                        "Normal" -> 2
+                        "Low" -> 1
+                        else -> 0
+                    }
+                }.take(4)
 
+                if (sortedPictures.size >= 4) {
+                    Log.d("SortedPictures", "$sortedPictures")
+                    startQuizActivity(sortedPictures)
+                } else {
+                    Toast.makeText(context, "Not enough images found for the quiz. Must have at least 4.", Toast.LENGTH_LONG).show()
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents: ", exception)
+            }
+    }
 
-
+    private fun startQuizActivity(pictures: List<PictureModel>) {
+        val intent = Intent(context, QuizActivity::class.java).apply {
+            putParcelableArrayListExtra("selectedPictures", ArrayList(pictures))
+            putExtra("quizType", "PriorityQuiz")
+        }
+        startActivity(intent)
+    }
 }

@@ -17,6 +17,7 @@ data class PictureModel(
     val imageYear: Int? = null,
     val timestamp: Timestamp? = null,
     val tags: List<String> = listOf(),
+    val imagePriority: String? = null
 
 
 ) : Parcelable {

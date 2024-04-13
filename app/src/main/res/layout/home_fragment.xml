@@ -80,6 +80,19 @@
 
         <Button
             style="@style/Widget.Material3.Button"
+            android:id="@+id/start_priority_quiz_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="30dp"
+            android:padding="25dp"
+            android:text="Start Priority Quiz"
+            app:layout_constraintStart_toStartOf="@id/home_menu"
+            app:layout_constraintTop_toBottomOf="@id/start_generate_quiz_button"
+            app:layout_constraintEnd_toEndOf="@id/home_menu"
+            />
+
+        <Button
+            style="@style/Widget.Material3.Button"
             android:id="@+id/family_album_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -87,7 +100,7 @@
             android:padding="25dp"
             android:text="Go to Family Album"
             app:layout_constraintStart_toStartOf="@id/home_menu"
-            app:layout_constraintTop_toBottomOf="@id/start_generate_quiz_button"
+            app:layout_constraintTop_toBottomOf="@id/start_priority_quiz_button"
             app:layout_constraintEnd_toEndOf="@id/home_menu"
             />
 
