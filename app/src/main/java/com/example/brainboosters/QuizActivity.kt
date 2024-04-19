@@ -360,13 +360,13 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private val distractorNumbers = mutableListOf<String>()
 
     private fun generateRememberNumber() {
-        val randomNumber = (1000..9999).random().toString() // Generates a random 4-digit number
+        val randomNumber = (10..99).random().toString() // Generates a random 4-digit number
         rememberNumber = randomNumber
 
         // Generate distractor numbers
         distractorNumbers.clear()
         while (distractorNumbers.size < 3) {
-            val distractor = (1000..9999).random().toString()
+            val distractor = (10..99).random().toString()
             if (distractor != rememberNumber && distractor !in distractorNumbers) {
                 distractorNumbers.add(distractor)
             }
@@ -561,7 +561,9 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val numberToRememberText = dialogView.findViewById<TextView>(R.id.number_to_remember_text)
         val nextButton = dialogView.findViewById<Button>(R.id.next_button)
 
-        numberToRememberText.text = "Remember this number: $rememberNumber"
+
+        numberToRememberText.text = "Remember this number:\n$rememberNumber"
+        numberToRememberText.setTextColor(ContextCompat.getColor(this, R.color.white))
 
         // Use TTS to read out the number
         speakOut("Remember this number: $rememberNumber")
