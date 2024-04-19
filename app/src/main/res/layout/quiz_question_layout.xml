@@ -144,5 +144,30 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/draggable_image_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="40dp"
+        android:layout_margin="16dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/question_title" />
+
+    <Button
+        android:id="@+id/submit_order_button"
+        android:layout_width="0dp"
+        android:layout_height="70dp"
+        android:layout_margin="10dp"
+        android:text="Confirm Order"
+        android:textSize="30sp"
+        android:textColor="@color/inverseSurfaceColor"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/quiz_answer_outline_default"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="@id/image_view_left_guideline"
+        app:layout_constraintTop_toBottomOf="@id/draggable_image_container"
+        app:layout_constraintEnd_toEndOf="@id/image_view_right_guideline"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

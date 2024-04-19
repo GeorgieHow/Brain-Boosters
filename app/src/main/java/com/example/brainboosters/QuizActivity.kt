@@ -18,10 +18,13 @@ import android.view.LayoutInflater
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.example.brainboosters.accessibility.AccessibleZoomImageView
-import com.google.common.reflect.TypeToken
+import com.example.brainboosters.adapter.QuizReorderPicturesAdapter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
@@ -31,6 +34,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import io.github.serpro69.kfaker.Faker
 import io.github.serpro69.kfaker.fakerConfig
+import java.util.Collections
 
 //Questions up here
 enum class QuestionType{
@@ -64,6 +68,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private val activityScope = CoroutineScope(Job() + Dispatchers.Main)
 
     private lateinit var selectedPictures: List<PictureModel>
+    private lateinit var pictureSequence: MutableList<PictureModel>
 
     private lateinit var questions: MutableList<Question>
     private var currentQuestionIndex = 0
@@ -93,6 +98,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.quiz_question_layout)
 
+        pictureSequence = mutableListOf()
 
         Log.wtf("QuizDebugging", "Started Quiz.")
 
@@ -111,8 +117,14 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
         activityScope.launch {
-            questions = getQuestions(selectedPictures).toMutableList()
+            val (questionsList, usedPictureSet) = getQuestions(selectedPictures)
+            questions = questionsList.toMutableList()
+            pictureSequence.addAll(usedPictureSet)
+            addReorderPicturesQuestion()
             addRecallQuestionToEnd()
+
+            Log.d("Questions", "$questions")
+
             loadQuestion()
             updateUIForLoadedContent()
         }
@@ -133,6 +145,11 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     }
                 }
             }
+        }
+
+        val submitOrderButton = findViewById<Button>(R.id.submit_order_button)
+        submitOrderButton.setOnClickListener {
+            evaluateAnswer("", submitOrderButton)
         }
     }
 
@@ -183,7 +200,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         return List(count) { faker.name.name() }
     }
 
-    private suspend fun getQuestions(selectedPictures: List<PictureModel>): List<Question> {
+    private suspend fun getQuestions(selectedPictures: List<PictureModel>): Pair<List<Question>, Set<PictureModel>> {
         val imagesCollectionPath = "images"
 
         //If only one picture is picked
@@ -195,6 +212,8 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val additionalImagesPerson = fetchAdditionalImageData(imagesCollectionPath, "person")
 
             val questions = mutableListOf<Question>()
+            val usedPictures = mutableSetOf<PictureModel>()
+
             selectedPictures.forEach { picture ->
                 // Initialize a set to ensure options are unique
                 val optionsSetPlace = mutableSetOf<String>()
@@ -299,7 +318,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
 
             // Return the list of questions
-            return questions
+            return Pair(questions, usedPictures)
         }
         //If multiple pictures are picked
         else {
@@ -309,10 +328,10 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val additionalEvents = fetchAdditionalImageData(imagesCollectionPath, "event").shuffled().distinct()
 
             val allQuestions = mutableListOf<Question>()
+            val usedPictures = mutableSetOf<PictureModel>()
             val minimumQuestions = 5
-            val usedQuestionsForPicture = mutableMapOf<String, MutableList<String>>() // Track used questions for each picture
+            val usedQuestionsForPicture = mutableMapOf<String, MutableList<String>>()
 
-            // Function to create and add a question if it's unique for the picture
             fun addQuestionWithRealOptions(picture: PictureModel, category: String, correctAnswer: String, additionalOptions: List<String>) {
                 val usedQuestions = usedQuestionsForPicture.getOrDefault(picture.documentId, mutableListOf())
                 if (!usedQuestions.contains(category)) {
@@ -332,11 +351,12 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     allQuestions.add(question)
                     usedQuestions.add(category)
                     usedQuestionsForPicture[picture.documentId ?: return] = usedQuestions
+                    usedPictures.add(picture)
                 }
             }
 
             selectedPictures.shuffled().forEach { picture ->
-                if (allQuestions.size >= minimumQuestions) return@forEach // Break if we have enough questions
+                if (allQuestions.size >= minimumQuestions) return@forEach
 
                 addQuestionWithRealOptions(picture, "place", picture.imagePlace ?: "", additionalPlaces)
                 addQuestionWithRealOptions(picture, "year", picture.imageYear?.toString() ?: "", additionalYears)
@@ -344,13 +364,14 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 if (picture.imagePerson?.isNotEmpty() == true) {
                     addQuestionWithRealOptions(picture, "person", picture.imagePerson, additionalPersons)
                 }
+
             }
 
-// Shuffle the list to ensure randomness in question order
+
             allQuestions.shuffle()
 
-// Trim the list to the desired size if necessary
-            return if (allQuestions.size > minimumQuestions) allQuestions.take(minimumQuestions) else allQuestions
+
+            return Pair(if (allQuestions.size > minimumQuestions) allQuestions.take(minimumQuestions) else allQuestions, usedPictures)
         }
     }
 
@@ -383,9 +404,21 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             questionType = QuestionType.SHORT_TERM,
             questionArea = "number"
         )
+        questions.add(recallQuestion)
+    }
 
-        // Assuming 'questions' is your list of quiz questions
-        questions.add(recallQuestion) // Add this as the last question
+    private fun addReorderPicturesQuestion() {
+        if (pictureSequence.size > 1) {
+            val reorderQuestion = Question(
+                questionText = "Arrange the pictures in the order they were shown.",
+                options =  pictureSequence.map { it.imageUrl as String? },
+                correctAnswer = pictureSequence.joinToString(",") { it.imageUrl?: "default_image_url" },
+                pictureModel = PictureModel.EMPTY,
+                questionType = QuestionType.SHORT_TERM,
+                questionArea = "reorder"
+            )
+            questions.add(reorderQuestion)
+        }
     }
 
 
@@ -458,57 +491,112 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun loadQuestion(){
         if (currentQuestionIndex < questions.size) {
             val question = questions[currentQuestionIndex]
+            pictureSequence.add(question.pictureModel)
 
             questionTitle = findViewById<TextView>(R.id.question_title)
             questionTitle.text = question.questionText
 
-            //Question Picture
-            val pictureImageView = findViewById<AccessibleZoomImageView>(R.id.picture_image_view)
+            if (question.questionArea == "reorder") {
 
+                Log.d("Reorder", "Reorder is running??")
 
-            Glide.with(this)
-                .load(question.pictureModel.imageUrl)
-                .listener(object : RequestListener<Drawable> {
+                getListOfButtons().forEach { it.visibility = View.GONE }
+                findViewById<Button>(R.id.submit_order_button).visibility = View.VISIBLE
+                findViewById<RecyclerView>(R.id.draggable_image_container).visibility = View.VISIBLE
+                findViewById<ImageView>(R.id.picture_image_view).visibility = View.GONE
 
-                    override fun onLoadFailed(
-                        e: GlideException?,
-                        model: Any?,
-                        target: Target<Drawable>?,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        return false
-                    }
-
-                    override fun onResourceReady(
-                        resource: Drawable?,
-                        model: Any?,
-                        target: Target<Drawable>?,
-                        dataSource: com.bumptech.glide.load.DataSource?,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        // This is called when the image is ready. Perform your actions here.
-                        pictureImageView.post {
-                            if (pictureImageView is AccessibleZoomImageView) {
-                                pictureImageView.resetZoom()
-                            }
-                        }
-                        return false
-                    }
-                })
-                .into(pictureImageView)
-
-            resetButtonColors()
-
-
-            val shuffledAnswers = question.options.shuffled()
-
-            //Answers
-            val buttons = getListOfButtons()
-            buttons.forEachIndexed { index, button ->
-                button.text = shuffledAnswers.getOrNull(index) ?: ""
+                showReorderUI(question.options)
             }
+            else{
+                getListOfButtons().forEach { it.visibility = View.VISIBLE } // Show answer buttons
+                findViewById<Button>(R.id.submit_order_button).visibility = View.GONE
+                findViewById<RecyclerView>(R.id.draggable_image_container).visibility = View.GONE
+                findViewById<ImageView>(R.id.picture_image_view).visibility = View.VISIBLE
+
+                val pictureImageView = findViewById<AccessibleZoomImageView>(R.id.picture_image_view)
+
+
+                Glide.with(this)
+                    .load(question.pictureModel.imageUrl)
+                    .listener(object : RequestListener<Drawable> {
+
+                        override fun onLoadFailed(
+                            e: GlideException?,
+                            model: Any?,
+                            target: Target<Drawable>?,
+                            isFirstResource: Boolean
+                        ): Boolean {
+                            return false
+                        }
+
+                        override fun onResourceReady(
+                            resource: Drawable?,
+                            model: Any?,
+                            target: Target<Drawable>?,
+                            dataSource: com.bumptech.glide.load.DataSource?,
+                            isFirstResource: Boolean
+                        ): Boolean {
+                            // This is called when the image is ready. Perform your actions here.
+                            pictureImageView.post {
+                                if (pictureImageView is AccessibleZoomImageView) {
+                                    pictureImageView.resetZoom()
+                                }
+                            }
+                            return false
+                        }
+                    })
+                    .into(pictureImageView)
+
+                resetButtonColors()
+
+
+                val shuffledAnswers = question.options.shuffled()
+
+                //Answers
+                val buttons = getListOfButtons()
+                buttons.forEachIndexed { index, button ->
+                    button.text = shuffledAnswers.getOrNull(index) ?: ""
+                }
+            }
+
+
         }
     }
+
+    private fun showReorderUI(imageUrls: List<String?>) {
+        val recyclerView = findViewById<RecyclerView>(R.id.draggable_image_container)
+        recyclerView.visibility = View.VISIBLE
+
+        val safeImageUrls = imageUrls.filterNotNull().toMutableList()
+
+        val reorderAdapter = QuizReorderPicturesAdapter(safeImageUrls,
+            this)
+
+        recyclerView.hasFixedSize()
+
+        recyclerView.adapter = reorderAdapter
+        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+
+        val touchHelperCallback = object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.START or ItemTouchHelper.END, 0) {
+            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+                val sourcePosition = viewHolder.adapterPosition
+                val targetPosition = target.adapterPosition
+
+                Log.d("ItemTouchHelper", "Attempting to move from position $sourcePosition to $targetPosition")
+                Collections.swap(safeImageUrls, sourcePosition, targetPosition)
+                reorderAdapter.notifyItemMoved(sourcePosition, targetPosition)
+
+                return true
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                // No swiping action needed
+            }
+        }
+        val itemTouchHelper = ItemTouchHelper(touchHelperCallback)
+        itemTouchHelper.attachToRecyclerView(recyclerView)
+    }
+
 
     private fun resetButtonColors() {
         val buttons = getListOfButtons()
@@ -575,63 +663,111 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         dialog.show()
     }
 
-
     private fun evaluateAnswer(selectedAnswer: String, button: Button) {
-
         disableAnswerButtons()
 
         val currentQuestion = questions[currentQuestionIndex]
 
-        val isCorrect = selectedAnswer == currentQuestion.correctAnswer
-        val attempt = QuestionAttempt(
-            uid = uid,
-            quizId = "",
-            questionText = currentQuestion.questionText,
-            correctAnswer = currentQuestion.correctAnswer,
-            userAnswer = selectedAnswer,
-            questionType = currentQuestion.questionType,
-            questionArea = currentQuestion.questionArea,
-            isCorrect = isCorrect
-        )
-        questionAttempts.add(attempt)
+        if(currentQuestion.questionArea != "reorder" ){
+            val isCorrect = selectedAnswer == currentQuestion.correctAnswer
+            val attempt = QuestionAttempt(
+                uid = uid,
+                quizId = "",
+                questionText = currentQuestion.questionText,
+                correctAnswer = currentQuestion.correctAnswer,
+                userAnswer = selectedAnswer,
+                questionType = currentQuestion.questionType,
+                questionArea = currentQuestion.questionArea,
+                isCorrect = isCorrect
+            )
+            questionAttempts.add(attempt)
 
-        val answerButtons = getListOfButtons()
+            val answerButtons = getListOfButtons()
 
-        if (selectedAnswer == currentQuestion.correctAnswer) {
-            //Changes button green
-            button.setBackgroundResource(R.drawable.quiz_answer_outline_correct)
-            val color = ContextCompat.getColor(this, R.color.surfaceColor)
-            button.setTextColor(color)
-
-            questionsRight++
-
-            // Increment the correct answer count for the current PictureModel
-            // Safely handle nullable documentId
-            val documentId = currentQuestion.pictureModel.documentId ?: "unknown"
-            val currentCount = correctAnswersCountMap[documentId] ?: 0
-            correctAnswersCountMap[documentId] = currentCount + 1
-
-        } else {
-            //Changes button red
-            button.setBackgroundResource(R.drawable.quiz_answer_outline_wrong)
-            val color = ContextCompat.getColor(this, R.color.surfaceColor)
-            button.setTextColor(color)
-
-            //Changes button with right answer green
-            answerButtons.find { it.text == currentQuestion.correctAnswer }?.let { button ->
+            if (selectedAnswer == currentQuestion.correctAnswer) {
+                //Changes button green
                 button.setBackgroundResource(R.drawable.quiz_answer_outline_correct)
                 val color = ContextCompat.getColor(this, R.color.surfaceColor)
                 button.setTextColor(color)
+
+                questionsRight++
+
+                // Increment the correct answer count for the current PictureModel
+                // Safely handle nullable documentId
+                val documentId = currentQuestion.pictureModel.documentId ?: "unknown"
+                val currentCount = correctAnswersCountMap[documentId] ?: 0
+                correctAnswersCountMap[documentId] = currentCount + 1
+
+            } else {
+                //Changes button red
+                button.setBackgroundResource(R.drawable.quiz_answer_outline_wrong)
+                val color = ContextCompat.getColor(this, R.color.surfaceColor)
+                button.setTextColor(color)
+
+                //Changes button with right answer green
+                answerButtons.find { it.text == currentQuestion.correctAnswer }?.let { button ->
+                    button.setBackgroundResource(R.drawable.quiz_answer_outline_correct)
+                    val color = ContextCompat.getColor(this, R.color.surfaceColor)
+                    button.setTextColor(color)
+                }
+
+                questionsWrong++
+
+                val documentId = currentQuestion.pictureModel.documentId ?: "unknown"
+                val currentCount = incorrectAnswersCountMap[documentId] ?: 0
+                incorrectAnswersCountMap[documentId] = currentCount + 1
             }
 
-            questionsWrong++
+            enableNextButton()
+        }
+        else{
+            // Get the current order of items from the adapter
+            val adapter = findViewById<RecyclerView>(R.id.draggable_image_container).adapter as QuizReorderPicturesAdapter
+            val currentOrder = adapter.getItems().joinToString(",")
+            val isCorrect = currentOrder == currentQuestion.correctAnswer
 
+            val attempt = QuestionAttempt(
+                uid = uid,
+                quizId = "",
+                questionText = currentQuestion.questionText,
+                correctAnswer = currentQuestion.correctAnswer,
+                userAnswer = currentOrder,
+                questionType = currentQuestion.questionType,
+                questionArea = currentQuestion.questionArea,
+                isCorrect = isCorrect
+            )
+            questionAttempts.add(attempt)
+
+            val confirmOrderButton = findViewById<Button>(R.id.submit_order_button)
+            if (isCorrect) {
+                confirmOrderButton.setBackgroundResource(R.drawable.quiz_answer_outline_correct)
+                questionsRight++
+            } else {
+                confirmOrderButton.setBackgroundResource(R.drawable.quiz_answer_outline_wrong)
+                questionsWrong++
+                showCorrectOrder(currentQuestion.correctAnswer?.split(",") ?: listOf())
+            }
+
+            // Update the correct and incorrect answers count maps
             val documentId = currentQuestion.pictureModel.documentId ?: "unknown"
-            val currentCount = incorrectAnswersCountMap[documentId] ?: 0
-            incorrectAnswersCountMap[documentId] = currentCount + 1
+            if (isCorrect) {
+                val currentCount = correctAnswersCountMap[documentId] ?: 0
+                correctAnswersCountMap[documentId] = currentCount + 1
+            } else {
+                val currentCount = incorrectAnswersCountMap[documentId] ?: 0
+                incorrectAnswersCountMap[documentId] = currentCount + 1
+            }
+
+            enableNextButton()
         }
 
-        enableNextButton()
+    }
+
+
+    private fun showCorrectOrder(correctOrder: List<String>) {
+        val recyclerView = findViewById<RecyclerView>(R.id.draggable_image_container)
+        val adapter = recyclerView.adapter as QuizReorderPicturesAdapter
+        adapter.updateItems(correctOrder)
     }
 
     private fun getListOfButtons(): List<Button> {
