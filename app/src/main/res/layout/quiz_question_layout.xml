@@ -41,6 +41,22 @@
         app:layout_constraintBottom_toBottomOf="@id/question_title"
         />
 
+    <Button
+        android:id="@+id/next_button"
+        android:layout_width="0dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginHorizontal="20dp"
+        android:text="Next"
+        android:textSize="30sp"
+        android:textColor="@color/inverseSurfaceColor"
+        android:onClick="onNextButtonClick"
+        android:visibility="gone"
+        android:background="@drawable/quiz_answer_outline_default"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/text_to_speech_button"
+        app:layout_constraintStart_toStartOf="@id/image_view_right_guideline"/>
+
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/image_view_left_guideline"
         android:layout_width="wrap_content"

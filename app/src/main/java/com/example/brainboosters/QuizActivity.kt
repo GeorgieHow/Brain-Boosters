@@ -139,8 +139,9 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun initializeUIForLoading() {
         // Set the ProgressBar to visible
         findViewById<ProgressBar>(R.id.loading_progress_bar).visibility = View.VISIBLE
-        // Hide quiz content, e.g., buttons, text views, etc.
-        // Example:
+
+        hideNextButton()
+
         findViewById<TextView>(R.id.question_title).visibility = View.GONE
         findViewById<Button>(R.id.text_to_speech_button).visibility = View.GONE
         findViewById<ImageView>(R.id.picture_image_view).visibility = View.GONE
@@ -148,12 +149,12 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         findViewById<Button>(R.id.answer_2_button).visibility = View.GONE
         findViewById<Button>(R.id.answer_3_button).visibility = View.GONE
         findViewById<Button>(R.id.answer_4_button).visibility = View.GONE
-        // Repeat for other quiz elements...
     }
 
     private fun updateUIForLoadedContent() {
         // Hide the ProgressBar
         findViewById<ProgressBar>(R.id.loading_progress_bar).visibility = View.GONE
+
         // Show quiz content
         findViewById<TextView>(R.id.question_title).visibility = View.VISIBLE
         findViewById<Button>(R.id.text_to_speech_button).visibility = View.VISIBLE
@@ -411,13 +412,12 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun goToNextQuestion() {
-        // Check if more questions are available
         if (currentQuestionIndex + 1 < questions.size) {
             currentQuestionIndex++ // Increment the question index
-            GlobalScope.launch(Dispatchers.Main) {
-                delay(5000L)
+            //GlobalScope.launch(Dispatchers.Main) {
+                //delay(5000L)
                 loadQuestion() // Load the next question
-            }
+            //}
         } else {
             // Handle the case where there are no more questions (e.g., show results or restart the quiz)
             Toast.makeText(this, "You've reached the end of the quiz! You got $questionsRight right and $questionsWrong wrong", Toast.LENGTH_SHORT).show()
@@ -575,6 +575,9 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
     private fun evaluateAnswer(selectedAnswer: String, button: Button) {
+
+        disableAnswerButtons()
+
         val currentQuestion = questions[currentQuestionIndex]
 
         val isCorrect = selectedAnswer == currentQuestion.correctAnswer
@@ -626,7 +629,7 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             incorrectAnswersCountMap[documentId] = currentCount + 1
         }
 
-        goToNextQuestion()
+        enableNextButton()
     }
 
     private fun getListOfButtons(): List<Button> {
@@ -637,6 +640,31 @@ class QuizActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             findViewById<Button>(R.id.answer_4_button)
         )
     }
+
+    private fun enableAnswerButtons() {
+        val buttons = getListOfButtons()
+        buttons.forEach { it.isEnabled = true }
+    }
+
+    private fun disableAnswerButtons() {
+        val buttons = getListOfButtons()
+        buttons.forEach { it.isEnabled = false }
+    }
+
+    private fun enableNextButton() {
+        findViewById<Button>(R.id.next_button).visibility = View.VISIBLE
+    }
+
+    private fun hideNextButton() {
+        findViewById<Button>(R.id.next_button).visibility = View.GONE
+    }
+
+    fun onNextButtonClick(view: View) {
+        hideNextButton()
+        enableAnswerButtons()
+        goToNextQuestion()
+    }
+
 
 
     //TEXT TO SPEECH METHODS BELOW
