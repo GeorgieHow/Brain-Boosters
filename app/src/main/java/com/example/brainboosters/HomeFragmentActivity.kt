@@ -69,8 +69,8 @@ class HomeFragmentActivity : Fragment() {
         val startGenerateQuizButton = findViewById<Button>(R.id.start_generate_quiz_button)
         startGenerateQuizButton.setBackgroundColor(Color.parseColor("#38656B"))
 
-        val familyAlbumQuizButton = findViewById<Button>(R.id.family_album_button)
-        familyAlbumQuizButton.setBackgroundColor(Color.parseColor("#917C9F"))
+        val familyAlbumButton = findViewById<Button>(R.id.family_album_button)
+        familyAlbumButton.setBackgroundColor(Color.parseColor("#917C9F"))
 
         val quizResultsButton = findViewById<Button>(R.id.quiz_results_button)
         quizResultsButton.setBackgroundColor(Color.parseColor("#FAC898"))
@@ -86,7 +86,7 @@ class HomeFragmentActivity : Fragment() {
         }
 
         val familyAlbum = FamilyAlbumActivity()
-        familyAlbumQuizButton.setOnClickListener {
+        familyAlbumButton.setOnClickListener {
             (activity as HomePageActivity).changeFragment(familyAlbum)
         }
 
@@ -97,17 +97,39 @@ class HomeFragmentActivity : Fragment() {
 
         // Using coroutine to perform database operation on a background thread
         lifecycleScope.launch {
-            val userDoc = withContext(Dispatchers.IO) {
-                db.collection("users").document(userEmail!!).get().await()
-            }
+            val userEmail = mAuth.currentUser?.email
 
-            // Check if age, dementiaType, and dementiaLevel exist and are not null
-            val age = userDoc.getDouble("age") // Firestore stores numbers as Doubles
-            val dementiaType = userDoc.getString("dementiaType")
-            val dementiaLevel = userDoc.getString("dementiaLevel")
+            if (userEmail != null) {
+                val userDoc = withContext(Dispatchers.IO) {
+                    db.collection("users").document(userEmail).get().await()
+                }
 
-            if (age == null || dementiaType == null || dementiaLevel == null) {
-                Snackbar.make(this@apply, "Please update your profile information if possible in the profile menu", Snackbar.LENGTH_LONG).show()
+                // Check if age, dementiaType, and dementiaLevel exist and are not null
+                val age = userDoc.getDouble("age") // Firestore stores numbers as Doubles
+                val dementiaType = userDoc.getString("dementiaType")
+                val dementiaLevel = userDoc.getString("dementiaLevel")
+
+                val rootView = view?.findViewById<View>(R.id.homeFragmentLayout)
+
+                if (age == null || dementiaType == null || dementiaLevel == null) {
+                    if (rootView != null) {
+                        Snackbar.make(rootView, "Please complete the current process before navigating away", Snackbar.LENGTH_LONG).apply {
+                            val snackbarLayout = this.view as Snackbar.SnackbarLayout
+                            val params = snackbarLayout.layoutParams as ViewGroup.MarginLayoutParams
+                            params.setMargins(
+                                params.leftMargin,
+                                params.topMargin,
+                                params.rightMargin,
+                                params.bottomMargin + 100 // Adjust this value based on the height of your bottom navigation bar
+                            )
+                            snackbarLayout.layoutParams = params
+                            show()
+                        }
+                    }
+                }
+            } else {
+                // Handle case where userEmail is null
+                Log.e(TAG, "User email is null")
             }
         }
 

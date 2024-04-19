@@ -30,12 +30,11 @@
     <color name="inverseSurfaceColor">#2d322c</color>
     <color name="surfaceDimColor">#d8dbd2</color>
 
-
-
-    <!--> Original Gradient Colours here: Start - 5ba95d  Middle - 446b6a End - 32343e <-->
-    <!--> Material Foundation Reccomended colors: Primary - #3a693a Secondary - #52634f Tertiary - #39656b <-->
+    <color name="transparentWhiteButton">#4DFFFFFF</color>
 
     <color name="transparentWhite">#40FFFFFF</color>
+
+    <!--> Materials theme Palette <-->
 
     <color name="md_theme_primary">#3A693A</color>
     <color name="md_theme_onPrimary">#FFFFFF</color>

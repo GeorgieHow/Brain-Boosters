@@ -5,30 +5,40 @@ import android.graphics.*
 
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.widget.ImageView
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
-import android.graphics.drawable.Drawable
-import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.appcompat.widget.AppCompatImageView
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.animation.addListener
 
+/**
+ * A custom ImageView class that lets you zoom a specific point on the image, based on
+ * where you click it. Used for making the pictures in the quiz more accessible and easier to
+ * see if there are smaller details in the background.
+ *
+ * @param context The Context the view is running in.
+ * @param attrs The attributes of the XML tag.
+ * @param defStyleAttr A style attribute from the current theme applied to this view.
+ */
 class AccessibleZoomImageView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : AppCompatImageView(context, attrs, defStyleAttr) {
 
-
+    // Sets up a matrix, and a boolean to help with the zoom
     private val zoomMatrix = Matrix()
     private var zoomInProgress = false
 
+    // On initialisation, the scale is set to a Matrix
     init {
         scaleType = ScaleType.MATRIX
     }
 
+    /**
+     * Overrides the onTouchEvent, so when the image is touched, it will zoom. Wherever the user
+     * touches is where it will zoom into.
+     *
+     * @param event MotionEvent instance containing full information about the event.
+     * @return Boolean value, which tells whether the event was carried out or not. True if done,
+     * false if not.
+     */
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (event.action == MotionEvent.ACTION_DOWN && !zoomInProgress) {
-            // Before zooming, change the scale type to MATRIX to allow for zoom manipulation
             scaleType = ScaleType.MATRIX
             zoomToPoint(event.x, event.y)
             return true
@@ -36,30 +46,43 @@ class AccessibleZoomImageView @JvmOverloads constructor(
         return super.onTouchEvent(event)
     }
 
+    /**
+    * Zooms to the specific point touched.
+    *
+    * @param x The x-coordinate of where the user touches.
+    * @param y The y-coordinate of where the user touches.
+    */
     private fun zoomToPoint(x: Float, y: Float) {
-        // Assume scaleFactor is determined dynamically or fixed as per your requirement
-        val scaleFactor = 2f
 
-        // Adjust the touch coordinates to account for the image's scale and position
+        // Scale of the zoom
+        val scaleFactor = 2f
         val adjustedCoords = adjustTouchCoordinates(x, y)
         val adjustedX = adjustedCoords.first
         val adjustedY = adjustedCoords.second
 
-        // Apply zoom using adjusted coordinates
-        zoomMatrix.reset() // Reset the matrix to apply a new scale
+        // Resets the Matrix, and scales it to the right x and y coordinates.
+        zoomMatrix.reset()
         zoomMatrix.postScale(scaleFactor, scaleFactor, adjustedX, adjustedY)
-        imageMatrix = zoomMatrix // Correctly assign the modified matrix to imageMatrix
+        imageMatrix = zoomMatrix
         zoomInProgress = true
 
-        // Schedule the resetZoom to run after a delay
-        postDelayed({ resetZoom() }, 2000) // Delay for 2 seconds before resetting
+        // Automatically reset zoom after 2 seconds
+        postDelayed({ resetZoom() }, 2000)
     }
+
+    /**
+     * Converts coordinates of where the user touched on the screen, to match the
+     * coordinates on the image clicked.
+     *
+     * @param x The x-coordinate of the touch.
+     * @param y The y-coordinate of the touch.
+     * @return A Pair containing the adjusted x and y coordinates.
+     */
     private fun adjustTouchCoordinates(x: Float, y: Float): Pair<Float, Float> {
-        val drawable = drawable ?: return Pair(x, y) // Ensure there is a drawable
+        val drawable = drawable ?: return Pair(x, y)
 
         val imageViewWidth = width
         val imageViewHeight = height
-
         val drawableWidth = drawable.intrinsicWidth
         val drawableHeight = drawable.intrinsicHeight
 
@@ -67,37 +90,38 @@ class AccessibleZoomImageView @JvmOverloads constructor(
         val dx: Float
         val dy: Float
 
-        // Assuming the image is centered in the ImageView
+        // Checks aspect ratio of the ImageView XML against the image inside it.
         if (imageViewWidth * drawableHeight > imageViewHeight * drawableWidth) {
-            // Image is limited by height, calculate vertical margins
+
+            // Scales it to make sure it fits horizontally, and maintains its aspect ratio.
             scale = imageViewHeight.toFloat() / drawableHeight.toFloat()
             dx = (imageViewWidth - drawableWidth * scale) * 0.5f
             dy = 0f
         } else {
-            // Image is limited by width, calculate horizontal margins
+
+            // Scales it to make sure it fits vertically, and maintains its aspect ratio
             scale = imageViewWidth.toFloat() / drawableWidth.toFloat()
             dx = 0f
             dy = (imageViewHeight - drawableHeight * scale) * 0.5f
         }
 
-        // Adjust the touch coordinates
+        // Adjusts them with the scale being used
         val adjustedX = (x - dx) / scale
         val adjustedY = (y - dy) / scale
 
         return Pair(adjustedX, adjustedY)
     }
 
+    /**
+     * Resets the zoom level to the original scale and layout of the ImageView.
+     */
     fun resetZoom() {
-        // After zooming out, reset the scale type to one that fits the image without zoom
+
         scaleType = ScaleType.FIT_CENTER
-
-        // Reset the zoom matrix
         imageMatrix = Matrix()
-
-        // Set zoomInProgress to false to allow for new zoom operations
         zoomInProgress = false
 
-        // Request layout to apply the new scale type and matrix
+        // Redo layout with the original pictures dimensions
         requestLayout()
     }
 

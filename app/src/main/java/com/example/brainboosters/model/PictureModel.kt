@@ -5,7 +5,10 @@ import android.os.Parcelable
 import com.google.firebase.Timestamp
 import java.util.Date
 
-
+/**
+ * A Model to keep track of all details for photos. Used to help upload it to Firebase, creating
+ * quizzes with said pictures and displaying picture details.
+ * */
 data class PictureModel(
     val imageUrl: String? = null,
     val imageName: String? = null,
