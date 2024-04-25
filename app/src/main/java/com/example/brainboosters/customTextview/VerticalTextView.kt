@@ -19,19 +19,15 @@ import androidx.core.graphics.withSave
  * */
 class VerticalTextView(context: Context, attrs: AttributeSet) : AppCompatTextView(context, attrs) {
 
-    // Works out if the text should be drawn from top to bottom based on the gravity.
-    private val topDown = gravity.let { g ->
-        !(Gravity.isVertical(g) && g.and(Gravity.VERTICAL_GRAVITY_MASK) == Gravity.BOTTOM)
+    init {
+        if (layout == null) {
+            setWillNotDraw(false)
+        }
     }
 
-    // Metrics used to measure the width and height of the view's text content that is
-    // currently in it.
-    private val metrics = BoringLayout.Metrics()
-    private var padLeft = 0
-    private var padTop = 0
-
-    // Keeps layout stored so no need to recalculate it if not needed
-    private var layout1: Layout? = null
+    // Works out if the text should be drawn from top to bottom based on the gravity.
+    private val isTopDown: Boolean
+        get() = !(Gravity.isVertical(gravity) && gravity.and(Gravity.VERTICAL_GRAVITY_MASK) == Gravity.BOTTOM)
 
     /**
      * Sets the text for the view and invalidates the previous layout.
@@ -41,46 +37,42 @@ class VerticalTextView(context: Context, attrs: AttributeSet) : AppCompatTextVie
      */
     override fun setText(text: CharSequence, type: BufferType) {
         super.setText(text, type)
-        layout1 = null
+        requestLayout()
+        invalidate()
     }
 
     /**
      * Gets the existing layout for text drawing, so it can draw it sideways.
      */
-    private fun makeLayout(): Layout {
-        if (layout1 == null) {
+    private val textLayout: Layout by lazy {
+        BoringLayout.Metrics().also { metrics ->
             metrics.width = height
-            paint.color = currentTextColor
-            paint.drawableState = drawableState
-            layout1 = BoringLayout.make(text, paint, metrics.width, Layout.Alignment.ALIGN_NORMAL, 2f, 0f, metrics, false, TruncateAt.END, height - compoundPaddingLeft - compoundPaddingRight)
-            padLeft = compoundPaddingLeft
-            padTop = extendedPaddingTop
+        }.let { metrics ->
+            BoringLayout.make(
+                text, paint, metrics.width, Layout.Alignment.ALIGN_NORMAL,
+                2f, 0f, metrics, false, TruncateAt.END,
+                height - compoundPaddingLeft - compoundPaddingRight
+            )
         }
-        return layout1!!
     }
 
     /**
      * Draws text vertically.
      *
-     * @param c The canvas on which the view draws its content.
+     * @param canvas The canvas on which the view draws its content.
      */
-    override fun onDraw(c: Canvas) {
-        if (layout == null)
-            return
-        c.withSave {
-            // Depending on gravity set at start, rotates the textview
-            if (topDown) {
-                val fm = paint.fontMetrics
-                // Translates it 90 clockwise
-                translate(textSize - (fm.bottom + fm.descent), 0f)
+    override fun onDraw(canvas: Canvas) {
+        canvas.withSave {
+            if (isTopDown) {
+                val textShift = textSize - (paint.fontMetrics.bottom + paint.fontMetrics.descent)
+                translate(textShift, 0f)
                 rotate(90f)
             } else {
-                // Translates it 90 counter clockwise
                 translate(textSize, height.toFloat())
                 rotate(-90f)
             }
-            translate(padLeft.toFloat(), padTop.toFloat())
-            makeLayout().draw(this)
+            translate(compoundPaddingLeft.toFloat(), extendedPaddingTop.toFloat())
+            textLayout.draw(this)
         }
     }
 }

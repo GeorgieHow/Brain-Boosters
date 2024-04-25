@@ -1,9 +1,7 @@
 package com.example.brainboosters
 
-import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,14 +25,17 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 
+/**
+ * The picture fragment which displays picture details and allows users to edit them.
+ */
 class PictureFragmentActivity : Fragment() {
 
+    // Gets authentication and database, as well as fragment to navigate back to.
     private val typeOfPicture = ""
-
     val mAuth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
-
     private val galleryFragment = GalleryFragmentActivity()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -44,12 +45,13 @@ class PictureFragmentActivity : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Sets up back button to navigate back to gallery fragment.
         val backButton = view.findViewById<Button>(R.id.back_button)
         backButton.setOnClickListener {
             (activity as HomePageActivity).changeFragment(galleryFragment)
         }
 
-        // Access the arguments to get the image details
+        // Uses companion object to parse through the photo details.
         val imageId = arguments?.getString(ARG_IMAGE_ID)
         val imageUrl = arguments?.getString(ARG_IMAGE_URL)
         val imageName = arguments?.getString(ARG_IMAGE_NAME)
@@ -63,7 +65,7 @@ class PictureFragmentActivity : Fragment() {
         val imageCreation = arguments?.getString(ARG_CREATED_AT)
         val imageType = arguments?.getString(ARG_IMAGE_TYPE)
 
-        // Use imageUrl and imageName to display details in your fragment
+        // Sets all the text views to the right details.
         val fileNameTextView: TextView = view.findViewById(R.id.file_name_text)
         fileNameTextView.text = imageName
         val fileNameTitleTextView: TextView = view.findViewById(R.id.file_name_title)
@@ -111,6 +113,7 @@ class PictureFragmentActivity : Fragment() {
         fileCreatedAtTextView.text = imageCreation
         val fileCreatedTitle: TextView = view.findViewById(R.id.created_at_title)
 
+        // Creates spinner for priority levels of the picture.
         val prioritySpinner: Spinner = view.findViewById(R.id.file_priority_spinner)
         ArrayAdapter.createFromResource(
             requireContext(),
@@ -121,15 +124,18 @@ class PictureFragmentActivity : Fragment() {
             prioritySpinner.adapter = adapter
         }
 
-        // Preselect the Spinner based on the `imagePriority` value
+        // Preselect the spinner, so when user edits its already on the current priority.
         val priorities = resources.getStringArray(R.array.priority_levels)
         imagePriority?.let {
             val position = priorities.indexOf(it)
             if (position >= 0) prioritySpinner.setSelection(position)
         }
 
+        // Finds constraint layout needed so xml can be edited here to make sure layout still
+        // works.
         val constraintLayout = view.findViewById<ConstraintLayout>(R.id.picture_constraint_layout)
 
+        // Hides some details if not needed based on photo type.
         if(imageType == "family album"){
             fileNameTextView.visibility = View.GONE
             fileNameTitleTextView.visibility = View.GONE
@@ -143,36 +149,41 @@ class PictureFragmentActivity : Fragment() {
             filePersonTitleTextView.visibility = View.GONE
         }
 
+        // Loads picture into ImageView with Glide.
         val filePictureImageView: ImageView = view.findViewById(R.id.picture_image_view)
         Glide.with(filePictureImageView.context)
             .load(imageUrl)
             .into(filePictureImageView)
 
+        // Gets all the buttons needed from layout.
         val editButton: Button = view.findViewById(R.id.edit_button)
         val confirmEditButton: Button = view.findViewById(R.id.confirm_edit_button)
         val cancelEditButton: Button = view.findViewById(R.id.cancel_button)
         val deletePictureButton: Button = view.findViewById(R.id.delete_picture_button)
-
         deletePictureButton.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.errorColor))
 
+        // Used for adding tags to picture.
         fileTagsEditText.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 val tagName = fileTagsEditText.text.toString().trim()
                 if (tagName.isNotEmpty()) {
-                    // Add the chip to the ChipGroup
+
+                    // Adds tag to chip group to show tag and resets auto fill text box.
                     addChipToGroup(tagName, tagsChipGroup)
-                    // Clear the input
                     fileTagsEditText.text = null
-                    // Check and add the tag to Firebase if it doesn't exist
+
+                    // Adds it to firebase if it doesnt already exist there.
                     addTagToFirebaseIfNotExists(tagName)
                 }
-                true // Consumes the action
+                true
             } else {
-                false // Doesn't consume the action
+                false
             }
         }
 
+        // Sets up edit button so all text views change to edit texts.
         editButton.setOnClickListener {
+            // For quiz pictures.
             if(imageType == "quiz"){
 
                 backButton.visibility = View.GONE
@@ -218,7 +229,7 @@ class PictureFragmentActivity : Fragment() {
 
                 constraintSet.applyTo(constraintLayout)
 
-                // Fetch tags for the logged-in user and populate the AutoCompleteTextView
+                // Fetch tags for the logged-in user and populate the AutoCompleteTextView.
                 val userId = mAuth.currentUser?.uid
                 if (userId != null) {
                     db.collection("tags")
@@ -231,9 +242,10 @@ class PictureFragmentActivity : Fragment() {
                         }
                 }
 
-                // Load existing tags as chips
+                // Load existing tags as chips.
                 loadExistingTagsAsChips(tagsChipGroup, imageTags)
             }else{
+                // Family album pictyres have less details so are loaded differently.
                 backButton.visibility = View.GONE
                 editButton.visibility = View.GONE
                 confirmEditButton.visibility = View.VISIBLE
@@ -262,7 +274,7 @@ class PictureFragmentActivity : Fragment() {
                 constraintSet.connect(priorityTitleTextView.id, ConstraintSet.TOP, fileDescriptionEditText.id, ConstraintSet.BOTTOM, 10)
                 constraintSet.applyTo(constraintLayout)
 
-                // Fetch tags for the logged-in user and populate the AutoCompleteTextView
+                // Fetch tags for the logged-in user and populate the AutoCompleteTextView.
                 val userId = mAuth.currentUser?.uid
                 if (userId != null) {
                     db.collection("tags")
@@ -275,11 +287,12 @@ class PictureFragmentActivity : Fragment() {
                         }
                 }
 
-                // Load existing tags as chips
+                // Load existing tags as chips.
                 loadExistingTagsAsChips(tagsChipGroup, imageTags)
             }
         }
 
+        // Sets up confirm edit button.
         confirmEditButton.setOnClickListener {
             if(imageType == "quiz") {
                 val imageName = fileNameEditText.text.toString()
@@ -297,9 +310,10 @@ class PictureFragmentActivity : Fragment() {
                     tags.add(chip.text.toString())
                 }
 
-                // Assume you have a path or unique identifier for the image/document you're updating
+                // Gets image it wants to update.
                 val imageDocRef = imageId?.let { it1 -> db.collection("images").document(it1) }
 
+                // Creates hashmap of updated details.
                 val updatedImageDetails = hashMapOf(
                     "name" to imageName,
                     "year" to imageYear,
@@ -311,19 +325,13 @@ class PictureFragmentActivity : Fragment() {
                     "tags" to tags
                 )
 
+                // If it can find the image, update all the values with the hashmap made.
                 if (imageDocRef != null) {
                     imageDocRef.update(updatedImageDetails as Map<String, Any>)
                         .addOnSuccessListener {
-                            // Handle success
-                            Toast.makeText(
-                                context,
-                                "Image details updated successfully.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            // Optionally, navigate the user away from the edit screen or refresh the data
                         }
                         .addOnFailureListener { e ->
-                            // Handle failure
+                            // In case photo cannot be updated, shows message.
                             Toast.makeText(
                                 context,
                                 "Error updating image details: ${e.message}",
@@ -393,14 +401,13 @@ class PictureFragmentActivity : Fragment() {
                 val imageDescription = fileDescriptionEditText.text.toString()
                 val imagePriority = prioritySpinner.selectedItem.toString()
 
-                // Collect tags from ChipGroup
+                // Collect tags from ChipGroup.
                 val tags = mutableListOf<String>()
                 for (i in 0 until tagsChipGroup.childCount) {
                     val chip = tagsChipGroup.getChildAt(i) as Chip
                     tags.add(chip.text.toString())
                 }
 
-                // Assume you have a path or unique identifier for the image/document you're updating
                 val imageDocRef = imageId?.let { it1 -> db.collection("images").document(it1) }
 
                 val updatedImageDetails = hashMapOf(
@@ -412,16 +419,8 @@ class PictureFragmentActivity : Fragment() {
                 if (imageDocRef != null) {
                     imageDocRef.update(updatedImageDetails as Map<String, Any>)
                         .addOnSuccessListener {
-                            // Handle success
-                            Toast.makeText(
-                                context,
-                                "Image details updated successfully.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            // Optionally, navigate the user away from the edit screen or refresh the data
                         }
                         .addOnFailureListener { e ->
-                            // Handle failure
                             Toast.makeText(
                                 context,
                                 "Error updating image details: ${e.message}",
@@ -463,22 +462,23 @@ class PictureFragmentActivity : Fragment() {
             }
         }
 
+        // Sets up delete button.
         deletePictureButton.setOnClickListener {
             val imageId = arguments?.getString(ARG_IMAGE_ID) ?: return@setOnClickListener
 
-            // Start by deleting the picture from the 'images' collection
+            // Finds image and deletes it from database.
             db.collection("images").document(imageId)
                 .delete()
                 .addOnSuccessListener {
-                    Toast.makeText(context, "Image successfully deleted", Toast.LENGTH_SHORT).show()
 
-                    // Now find related quizzes in 'quizImageLinks' using the imageId
+                    // Looks through quiz image links with the id to delete those records as well.
                     db.collection("quizImageLinks")
                         .whereEqualTo("imageId", imageId)
                         .get()
                         .addOnSuccessListener { documents ->
                             for (document in documents) {
-                                // For each quizImageLink, get the quizId and delete the related quiz
+
+                                // For each quizImageLink, get the quizId and delete the related quiz.
                                 val quizId = document.getString("quizId") ?: continue
                                 db.collection("quizzes").document(quizId)
                                     .delete()
@@ -488,11 +488,10 @@ class PictureFragmentActivity : Fragment() {
                                         Log.e("DeleteQuiz", "Error deleting related quiz", e)
                                     }
 
-                                // Also delete the quizImageLink document itself
+                                // Deletes the quizImageLink document itself.
                                 db.collection("quizImageLinks").document(document.id)
                                     .delete()
                                     .addOnSuccessListener {
-                                        // Successfully deleted quizImageLink document
                                     }
                                     .addOnFailureListener { e ->
                                         Log.e("DeleteLink", "Error deleting quiz image link", e)
@@ -507,9 +506,11 @@ class PictureFragmentActivity : Fragment() {
                     Toast.makeText(context, "Error deleting image: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
 
+            // Goes back to gallery fragment.
             (activity as HomePageActivity).changeFragment(galleryFragment)
         }
 
+        // Sets up cancel edit button.
         cancelEditButton.setOnClickListener {
             if(imageType == "quiz") {
 
@@ -590,50 +591,73 @@ class PictureFragmentActivity : Fragment() {
 
     }
 
+    /**
+     * Loads all previous tags into the chip group.
+     *
+     * @param chipGroup The chip group.
+     * @param tags The list of tag strings to be added to the chip group.
+     */
     private fun loadExistingTagsAsChips(chipGroup: ChipGroup, tags: ArrayList<String>?) {
+        // Clears chip group.
         chipGroup.removeAllViews()
         tags?.forEach { tag ->
             addChipToGroup(tag, chipGroup)
         }
     }
 
+    /**
+     * Adds a single tag as a chip to a chip group.
+     *
+     * @param tag The tag string to be added as a chip.
+     * @param chipGroup The chip group.
+     */
     private fun addChipToGroup(tag: String, chipGroup: ChipGroup) {
         val chip = Chip(context).apply {
             text = tag
             isCloseIconVisible = true
+            // Removes chip if the 'X' is clicked.
             setOnCloseIconClickListener { chipGroup.removeView(this) }
         }
+
+        // Adds to group.
         chipGroup.addView(chip)
     }
 
+    /**
+     * Adds tag to database if it does not already exist.
+     *
+     * @param tagName The name of the tag to check if its already there or add it.
+     */
     private fun addTagToFirebaseIfNotExists(tagName: String) {
-        val userId = mAuth.currentUser?.uid ?: return // Return early if user ID is null
-        // Query to check if the tag already exists
+        val userId = mAuth.currentUser?.uid ?: return
+
+        // Queries the tag for the user.
         db.collection("tags")
             .whereEqualTo("uid", userId)
             .whereEqualTo("tagName", tagName)
             .limit(1)
             .get()
             .addOnSuccessListener { documents ->
+                // Adds record if no tag is found.
                 if (documents.isEmpty) {
-                    // The tag doesn't exist, add it
                     val newTag = hashMapOf(
                         "uid" to userId,
                         "tagName" to tagName
                     )
+                    // Adds tag to database.
                     db.collection("tags")
                         .add(newTag)
                         .addOnSuccessListener {
-                            // Successfully added new tag
-                            Toast.makeText(context, "New tag added: $tagName", Toast.LENGTH_SHORT).show()
                         }
                         .addOnFailureListener { e ->
-                            Toast.makeText(context, "Error adding tag: ${e.message}", Toast.LENGTH_SHORT).show()
                         }
                 }
             }
     }
 
+    /**
+     * Companion object to parse all picture data through.
+     */
     companion object {
         private const val ARG_IMAGE_ID = "image_id"
         private const val ARG_IMAGE_URL = "image_url"
@@ -651,6 +675,10 @@ class PictureFragmentActivity : Fragment() {
 
         private const val  ARG_IMAGE_TYPE = "image_type"
 
+        /**
+         * Creates new instance of the fragment with all these details, so picture details
+         * can be displayed to the user.
+         */
         fun newInstance(imageId: String, imageUrl: String, imageName: String, imageYear: String, imagePlace: String?,
                         event: String? = null, description: String? = null, person: String? = null,
                         priority: String? = null, tags: ArrayList<String>? = null, createdAt: String? = null, type: String? = null):

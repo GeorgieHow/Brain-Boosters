@@ -3,8 +3,6 @@ package com.example.brainboosters
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -19,8 +17,12 @@ import com.example.brainboosters.model.PictureModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
+/**
+ * A fragment where users can select their pictures for the quiz before starting/
+ */
 class QuizImageSelectionActivity : Fragment(){
 
+    // Sets up recycler view and gets database and authentication.
     private lateinit var recyclerViewImages: RecyclerView
     private val picturesList = mutableListOf<PictureModel>()
     private val db = FirebaseFirestore.getInstance()
@@ -30,14 +32,10 @@ class QuizImageSelectionActivity : Fragment(){
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.quiz_image_selection, container, false)
+        // Sets up recycler view.
         recyclerViewImages = view.findViewById(R.id.image_selector_recycler_view)
-
-
         recyclerViewImages.layoutManager = GridLayoutManager(requireContext(), 3)
-
-        // Fetch pictures and set up the adapter within the completion block
         fetchPicturesFromFirestore { pictures ->
             activity?.runOnUiThread {
                 recyclerViewImages.adapter = QuizPictureAdapter(requireContext(), pictures)
@@ -50,18 +48,23 @@ class QuizImageSelectionActivity : Fragment(){
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Creates back button so user can navigate back to main menu.
         val backButton = view.findViewById<Button>(R.id.back_button)
         val homePage = HomeFragmentActivity()
         backButton.setOnClickListener {
             (activity as HomePageActivity).changeFragment(homePage)
         }
 
+        // Creates start quiz button so the user can start the quiz.
         val startQuizButton = view.findViewById<Button>(R.id.start_quiz_button)
         startQuizButton.setOnClickListener {
+
+            // Gets the adapter for the recycler view and the pictures the user has selected.
             val adapter = recyclerViewImages.adapter as QuizPictureAdapter
             val selectedPictures = adapter.getSelectedPictures()
             val quizType = "GeneratedQuiz"
 
+            // Start quiz if the selected pictures is not empty.
             if (selectedPictures.isNotEmpty()){
                 val intent = Intent(context, QuizActivity::class.java).apply {
                     putParcelableArrayListExtra("selectedPictures", ArrayList(selectedPictures))
@@ -74,6 +77,7 @@ class QuizImageSelectionActivity : Fragment(){
 
             }
             else{
+                // Displays if no pictures have been picked.
                 Toast.makeText(context, "Must pick at least 1 picture for the quiz",
                     Toast.LENGTH_SHORT).show()
             }
@@ -81,12 +85,17 @@ class QuizImageSelectionActivity : Fragment(){
         }
     }
 
+    /**
+     * A method to fetch pictures from firestore to display in recycler view.
+     */
     private fun fetchPicturesFromFirestore(completion: (List<PictureModel>) -> Unit) {
 
+        // Looks through the images collection for the users images.
         db.collection("images")
             .whereEqualTo("uid", mAuth.currentUser?.uid)
             .get()
             .addOnSuccessListener { documents ->
+                // Gets all the pictures details
                 for (document in documents) {
                     val imageUrl = document.getString("imageUrl")
                     val pictureId = document.id
@@ -97,6 +106,7 @@ class QuizImageSelectionActivity : Fragment(){
                     val imageEvent = document.getString("event")
                     val imageDescription = document.getString("description")
 
+                    // Creates picture model with it.
                     if (imageUrl != null) {
                         imageName?.let { PictureModel(imageUrl, it, pictureId, imagePerson,
                             imagePlace, imageEvent, imageDescription, imageYear) }

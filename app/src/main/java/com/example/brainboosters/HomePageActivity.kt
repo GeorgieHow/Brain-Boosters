@@ -24,7 +24,7 @@ class HomePageActivity : AppCompatActivity() {
         isUploadFragmentPart2Displayed = displayed
     }
 
-    fun isUploadFragmentPart2Displayed(): Boolean {
+    fun isUploadFragmentPart2DisplayedGetter(): Boolean {
         return isUploadFragmentPart2Displayed
     }
 
@@ -45,7 +45,7 @@ class HomePageActivity : AppCompatActivity() {
         menuBottom.setItemSelected(R.id.nav_home)
         menuBottom.setOnItemSelectedListener { itemId ->
             // Check if trying to navigate away from UploadFragmentPart2, stops user from doing it.
-            if (isUploadFragmentPart2Displayed) {
+            if (isUploadFragmentPart2DisplayedGetter() == true) {
                 Snackbar.make(rootView, "Please complete the current process before " +
                         "navigating away",
                     Snackbar.LENGTH_LONG).show()

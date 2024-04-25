@@ -50,7 +50,7 @@
         android:gravity="center"
         android:text="Please click the sign in button to start, or the log-in button to continue from where you last left off."
         android:textColor="#FFFFFF"
-        android:textSize="18dp"
+        android:textSize="22dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/brain_boosters_text"

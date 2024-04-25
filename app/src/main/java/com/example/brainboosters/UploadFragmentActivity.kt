@@ -30,8 +30,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import java.util.UUID
 
+/**
+ * A fragment which users can upload their photos to their account on.
+ */
 class UploadFragmentActivity : Fragment() {
 
+    // Set up details for upload fragment.
     private lateinit var choosePictureButton: Button
     private lateinit var uploadButton: Button
     private lateinit var editFileName: TextInputEditText
@@ -45,13 +49,16 @@ class UploadFragmentActivity : Fragment() {
 
     private val selectedTags = HashSet<String>()
 
+    // Gets all firebase dependencies.
     private var mAuth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
 
+    // Gets fragments to navigate to.
     private val galleryFragment = GalleryFragmentActivity()
     private val uploadPart2Fragment = UploadFragmentPart2Activity()
 
+    // Sets up photo type.
     private var isQuizPhoto = false
     private var isFamilyAlbumPhoto = false
 
@@ -60,11 +67,13 @@ class UploadFragmentActivity : Fragment() {
         savedInstanceState: Bundle?): View?
             = inflater.inflate(R.layout.upload_fragment, container, false).apply {
 
+        // Establishes all elements and initialises them.
         choosePictureButton = findViewById(R.id.choose_picture_button)
         uploadButton = findViewById(R.id.upload_button)
         editFileName = findViewById(R.id.photo_name_edit_text)
         pictureImageView = findViewById(R.id.chosen_picture_image_view)
 
+        // Opens picture folder when clicking choose picture button.
         choosePictureButton.setOnClickListener {
             openPictureFolder()
         }
@@ -84,10 +93,12 @@ class UploadFragmentActivity : Fragment() {
         quizInformationLayout.visibility = View.GONE
         familyAlbumInformationLayout.visibility = View.GONE
 
+        // Colour codes background to make it clearer for user.
         quizPictureButton.setBackgroundColor(Color.parseColor("#38656B"))
         familyAlbumPictureButton.setBackgroundColor(Color.parseColor("#917C9F"))
         informationContainer.setCardBackgroundColor(Color.parseColor("#c8ebfa"))
 
+        // Shows quiz picture details to upload.
         quizPictureButton.setOnClickListener {
             informationContainer.setCardBackgroundColor(Color.parseColor("#c8ebfa"))
             quizInformationLayout.visibility = View.VISIBLE
@@ -99,6 +110,7 @@ class UploadFragmentActivity : Fragment() {
             isFamilyAlbumPhoto = false
         }
 
+        // Shows family picture details to upload.
         familyAlbumPictureButton.setOnClickListener {
             informationContainer.setCardBackgroundColor(Color.parseColor("#E6E6FA"))
             quizInformationLayout.visibility = View.GONE
@@ -110,16 +122,17 @@ class UploadFragmentActivity : Fragment() {
             isFamilyAlbumPhoto = true
         }
 
+        // Sets up auto complete text view for tags.
         val autoCompleteTextView = findViewById<AutoCompleteTextView>(R.id.tags_autocomplete_edit_text)
         val chipGroup = findViewById<ChipGroup>(R.id.chip_group)
 
+        // Fetches tags and sets up adapter.
         fetchTags { tags ->
-            // Once tags are fetched, set up the adapter
             val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, tags)
             autoCompleteTextView.setAdapter(adapter)
         }
 
-        // Listen for completion and add tags as Chips
+        //Lets user add tags to the field when pressing enter.
         autoCompleteTextView.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 val tagName = autoCompleteTextView.text.toString()
@@ -137,11 +150,14 @@ class UploadFragmentActivity : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Sets up back button so user can navigate back.
         val backButton = view.findViewById<Button>(R.id.back_button)
         backButton.setOnClickListener {
             (activity as HomePageActivity).changeFragment(galleryFragment)
         }
 
+        // Sets up upload button so user can navigate to the correct fragment, depending on
+        // the photo they upload.
         val uploadButton = view.findViewById<Button>(R.id.upload_button)
         uploadButton.setOnClickListener {
             if(this::imageUri.isInitialized){
@@ -154,10 +170,14 @@ class UploadFragmentActivity : Fragment() {
         }
     }
 
+    /**
+     * A method which fetches all the tags stored in firebase.
+     */
     private fun fetchTags(callback: (List<String>) -> Unit) {
         val firestore = FirebaseFirestore.getInstance()
         val currentUserUid = mAuth.currentUser?.uid
 
+        // Searches through the tag collection so it can autofill tags for quicker entry.
         firestore.collection("tags")
             .whereEqualTo("uid", currentUserUid)
             .get()
@@ -170,37 +190,51 @@ class UploadFragmentActivity : Fragment() {
             }
     }
 
+    /**
+     * A method which adds the text entered as a chip to the chip group.
+     */
     private fun addTagAsChip(tagName: String, chipGroup: ChipGroup) {
-        if (selectedTags.add(tagName)) { // Adds the tag if it's not already present
+        // Adds tag if not present already.
+        if (selectedTags.add(tagName)) {
             val chip = Chip(context).apply {
                 text = tagName
                 isCloseIconVisible = true
                 setOnCloseIconClickListener {
                     chipGroup.removeView(this)
-                    selectedTags.remove(tagName) // Remove tag from selectedTags when chip is removed
+                    selectedTags.remove(tagName)
                 }
             }
             chipGroup.addView(chip)
         }
     }
 
+    /**
+     * Launches devices image folder for user to pick an image.
+     */
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            // Handle the result here, e.g., get the selected image URI
+            // Gets uri of the image selected and puts it in the image view.
             imageUri = result.data?.data!!
             pictureImageView.setImageURI(imageUri)
-
             quizPictureButton.visibility = View.VISIBLE
             familyAlbumPictureButton.visibility = View.VISIBLE
         }
     }
 
+    /**
+     * Method to open the actual device picture folder.
+     */
     private fun openPictureFolder() {
         val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"
         pickImageLauncher.launch(intent)
     }
 
+    /**
+     * Method to upload picture to database.
+     *
+     * @param uri The uri of the image.
+     */
     private fun uploadImage(uri: Uri) {
         if(isQuizPhoto && !isFamilyAlbumPhoto){
             val photoType = "quiz"
@@ -220,40 +254,39 @@ class UploadFragmentActivity : Fragment() {
             val photoEventEditText = view?.findViewById<EditText>(R.id.photo_event_edit_text)
             val photoEvent = photoEventEditText?.text.toString()
 
+            // Checks none are empty first.
             if (photoName.isEmpty() || photoWhere.isEmpty() || photoEvent.isEmpty()) {
                 Toast.makeText(context, "All text fields with a * on the end must be filled in.",
                     Toast.LENGTH_SHORT).show()
-                return // Stop the function if validation fails
+                return
             }
 
-            // Check if photoYear is a number and exactly four digits long
+            // Check if photoYear is a number and exactly four digits long as validation.
             val photoYearNum: Int? = try {
                 photoYear.toInt()
             } catch (e: NumberFormatException) {
                 Toast.makeText(context, "Photo year must be a valid four-digit number", Toast.LENGTH_SHORT).show()
                 return
             }
-
-            // Additional check for the year being exactly four digits, if necessary
+            // Additional check for the year being exactly four digits,.
             if (photoYearNum != null && photoYear.length != 4) {
                 Toast.makeText(context, "Photo year must be exactly four digits long", Toast.LENGTH_SHORT).show()
                 return
             }
 
+            // If a picture has been selected, proceed with upload.
             if (uri != null){
                 val storageReference = storage.reference
 
+                // Create reference to the picture within firebase storage.
                 val fileName = UUID.randomUUID().toString() + " .jpg"
                 val imagesRef = storageReference.child("images/$fileName")
-
                 imagesRef.putFile(imageUri)
                     .addOnSuccessListener { taskSnapshot ->
-                        // Image uploaded successfully
-                        // Now, get the download URL
                         imagesRef.downloadUrl.addOnSuccessListener { downloadUri ->
                             val imageUrl = downloadUri.toString()
 
-                            // Store the download URL in Firestore or perform other actions
+                            // Creates a hash map to store extra picture details in the database.
                             val uid = mAuth.currentUser?.uid
                             val uriString: String = uri.toString()
 
@@ -269,14 +302,14 @@ class UploadFragmentActivity : Fragment() {
                                 "createdAt" to FieldValue.serverTimestamp()
                             )
 
+                            // Adds hash map to the images collection to make a new image.
                             val imagesCollection = db.collection("images")
                             imagesCollection.add(imageDetails)
                                 .addOnSuccessListener { documentReference ->
-                                    // Document added successfully, now get the document ID
                                     val photoId = documentReference.id
                                     Log.d("Firestore", "DocumentSnapshot added with ID: $photoId")
 
-                                    // Pass the photo ID to UploadFragmentPart2Activity
+                                    // Pass the photo ID to UploadFragmentPart2Activity if need be.
                                     val bundle = Bundle().apply {
                                         putString("photoId", photoId)
                                     }
@@ -286,39 +319,36 @@ class UploadFragmentActivity : Fragment() {
                                     (activity as HomePageActivity).changeFragment(uploadPart2Fragment)
                                 }
                                 .addOnFailureListener { e ->
-                                    // Handle the case where adding the document fails
                                     Log.e("Firestore", "Error adding document", e)
                                     Toast.makeText(context, "Failed to upload image details.", Toast.LENGTH_SHORT).show()
                                 }
                         }
                     }
                     .addOnFailureListener { exception ->
-                        // Handle unsuccessful upload
                     }
-
-
             }
             else {
-                Log.d("Firestore", "Cant ;P")
             }
         }
+        // If its a family photo, upload different details.
         else if(isFamilyAlbumPhoto && !isQuizPhoto){
             val photoType = "family album"
 
+            // Get details entered.
             val photoDescriptionEditText = view?.findViewById<EditText>(R.id.photo_description_edit_text)
             val photoDescription = photoDescriptionEditText?.text.toString()
-
             val tagCollection = db.collection("tags")
-
             val tags = selectedTags.toList()
             val uid = mAuth.currentUser?.uid
 
             if (uri != null){
                 val storageReference = storage.reference
 
+                // Create a place in firebase storage for it.
                 val fileName = UUID.randomUUID().toString() + " .jpg"
                 val imagesRef = storageReference.child("images/$fileName")
 
+                // Add tags to the tag collection.
                 tags.forEach { tagName ->
                     tagCollection.whereEqualTo("tagName", tagName).get().addOnSuccessListener { snapshot ->
                         if (snapshot.isEmpty) {
@@ -327,14 +357,13 @@ class UploadFragmentActivity : Fragment() {
                     }
                 }
 
+                // Upload file to firestorage.
                 imagesRef.putFile(imageUri)
                     .addOnSuccessListener { taskSnapshot ->
-                        // Image uploaded successfully
-                        // Now, get the download URL
                         imagesRef.downloadUrl.addOnSuccessListener { downloadUri ->
                             val imageUrl = downloadUri.toString()
 
-                            // Store the download URL in Firestore or perform other actions
+                            // Creates a hash map to store extra picture details in the database.
                             val uid = mAuth.currentUser?.uid
                             val uriString: String = uri.toString()
 
@@ -347,30 +376,23 @@ class UploadFragmentActivity : Fragment() {
                                 "createdAt" to FieldValue.serverTimestamp()
                             )
 
+                            // Stores all the extra details in firebase database.
                             val imagesCollection = db.collection("images")
                             imagesCollection.add(imageDetails)
                                 .addOnSuccessListener {
                                     (activity as HomePageActivity).changeFragment(galleryFragment)
                                 }
                                 .addOnFailureListener { e ->
-                                    // Handle the case where adding the document fails
                                     Log.e("Firestore", "Error adding document", e)
                                     Toast.makeText(context, "Failed to upload image details.", Toast.LENGTH_SHORT).show()
                                 }
                         }
                     }
                     .addOnFailureListener { exception ->
-                        // Handle unsuccessful upload
                     }
-
-
             }
             else {
-                Log.d("Firestore", "Cant ;P")
             }
-
-
         }
-
     }
 }

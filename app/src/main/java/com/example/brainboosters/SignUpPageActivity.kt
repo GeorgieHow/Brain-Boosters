@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
@@ -71,10 +72,7 @@ class SignUpPageActivity : AppCompatActivity() {
 
                     // Creates the user in Firebase Authentication with the email and password.
                     mAuth.createUserWithEmailAndPassword(emailString, passwordString)
-                        .addOnCompleteListener(this) { task ->
-
-                            // If the task is successful, the user is created and notified.
-                            if (task.isSuccessful) {
+                        .addOnCompleteListener(this) { task -> if (task.isSuccessful) {
                                 Snackbar.make(rootView,
                                     "Account created. Please verify your email before attempting to log in."
                                     , Snackbar.LENGTH_LONG).show()
@@ -118,9 +116,11 @@ class SignUpPageActivity : AppCompatActivity() {
                                     }
                             }
                             else{
-                                Snackbar.make(rootView,
-                                    "Account creation unsuccessful."
-                                    , Snackbar.LENGTH_LONG).show()
+                            Snackbar.make(rootView, "Account creation unsuccessful due to:" +
+                                    " ${task.exception?.message}", Snackbar.LENGTH_LONG).apply {
+                                (view.findViewById(com.google.android.material.R.id.snackbar_text)
+                                        as TextView).maxLines = 3
+                            }.show()
                             }
                         }
                     }

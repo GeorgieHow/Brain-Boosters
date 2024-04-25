@@ -24,12 +24,17 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 
+/**
+ * A fragment which shows and lets a user edit their profile details.
+ */
 class ProfileFragmentActivity : Fragment() {
 
+    // Initialises variables for profile picture.
     private lateinit var pickImageLauncher: ActivityResultLauncher<Intent>
     private var selectedImageUri: Uri? = null
     private var originalProfilePicUrl: String? = null
 
+    // Gets instances of database and authentication to get user details.
     private var mAuth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
@@ -45,13 +50,16 @@ class ProfileFragmentActivity : Fragment() {
 
         val profileImageView: ShapeableImageView = view.findViewById(R.id.profile_image_view)
 
+        // Fetches user details from firebase with method.
         mAuth.currentUser?.let { fetchUserDetailsFromFirebase(it.uid) }
 
+        // Loads image launcher so when user wants to change image they can pick from device.
         pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
 
                 selectedImageUri = result.data?.data
 
+                // Loads the picture into the profile picture image view.
                 Glide.with(this)
                     .load(selectedImageUri)
                     .placeholder(ContextCompat.getDrawable(requireContext(), R.drawable.profile_picture))
@@ -60,13 +68,14 @@ class ProfileFragmentActivity : Fragment() {
             }
         }
 
+        // Gets all buttons needed for this page.
         val editProfileButton: Button = view.findViewById(R.id.edit_profile_button)
         val cancelEditProfileButton: Button = view.findViewById(R.id.cancel_edit_profile_button)
         val confirmEditProfileButton: Button = view.findViewById(R.id.confirm_edit_profile_button)
         val editPhotoButton: Button = view.findViewById(R.id.edit_picture_button)
-
         cancelEditProfileButton.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.errorColor))
 
+        // When clicked, launches devices image file.
         editPhotoButton.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK)
             intent.type = "image/*"
@@ -83,15 +92,16 @@ class ProfileFragmentActivity : Fragment() {
         val editDementiaTypeEditText: EditText = view.findViewById(R.id.dementia_type_edit_text)
         val editDementiaLevelSpinner: Spinner = view.findViewById(R.id.dementia_level_spinner)
 
+        // Sets up spinner for dementia level.
         val adapter: ArrayAdapter<CharSequence> = ArrayAdapter.createFromResource(
             requireContext(),
-            R.array.dementia_levels, // The array resource containing your items
-            R.layout.spinner_item // Custom layout for items
+            R.array.dementia_levels,
+            R.layout.spinner_item
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-
         editDementiaLevelSpinner.adapter = adapter
 
+        // Sets up edit button to show the right edit boxes.
         editProfileButton.setOnClickListener {
             editProfileButton.visibility = View.GONE
             cancelEditProfileButton.visibility = View.VISIBLE
@@ -109,6 +119,7 @@ class ProfileFragmentActivity : Fragment() {
             editDementiaLevelSpinner.visibility = View.VISIBLE
         }
 
+        // Reverts the page back to text views if cancelled.
         cancelEditProfileButton.setOnClickListener {
             editProfileButton.visibility = View.VISIBLE
             cancelEditProfileButton.visibility = View.GONE
@@ -125,19 +136,23 @@ class ProfileFragmentActivity : Fragment() {
             editDementiaTypeEditText.visibility = View.GONE
             editDementiaLevelSpinner.visibility = View.GONE
 
+            // Need to return to old profile picture.
             selectedImageUri = Uri.parse(originalProfilePicUrl ?: return@setOnClickListener)
-
             loadProfileImage(originalProfilePicUrl)
         }
 
+        // Sets up confirm edited button update details.
         confirmEditProfileButton.setOnClickListener {
+
+            // Gets all new details for profile.
             val fullName = editFullNameEditText.text.toString()
-            val age = editAgeEditText.text.toString().toIntOrNull() // Convert to Integer
+            val age = editAgeEditText.text.toString().toIntOrNull()
             val dementiaType = editDementiaTypeEditText.text.toString()
             val dementiaLevel = editDementiaLevelSpinner.selectedItem.toString()
 
             originalProfilePicUrl = selectedImageUri.toString()
 
+            // Checks certain aspects are not null and updates profile using the method.
             if (fullName.isNotBlank() && age != null && dementiaType.isNotBlank()) {
                 updateUserData(fullName, age, dementiaType, dementiaLevel)
 
@@ -158,27 +173,33 @@ class ProfileFragmentActivity : Fragment() {
         }
     }
 
+    /**
+     * A method to get the users details using their UID.
+     *
+     * @param userId The users id.
+     */
     private fun fetchUserDetailsFromFirebase(userId: String) {
         db.collection("users").document(userId).get().addOnSuccessListener { document ->
             if (document != null) {
+
+                // Finds all user details from document.
                 val name = document.getString("fullName") ?: "N/A"
                 val age = document.getLong("age")?.toInt()?.toString() ?: "N/A"
                 val email = mAuth.currentUser?.email
                 val dementiaType = document.getString("dementiaType") ?: "N/A"
                 val dementiaLevel = document.getString("dementiaLevel") ?: "N/A"
 
+                // Makes sure spinner is set to the right level.
                 val editDementiaLevelSpinner: Spinner = view?.findViewById(R.id.dementia_level_spinner) ?: return@addOnSuccessListener
                 val adapter = editDementiaLevelSpinner.adapter
-
                 val position = (0 until adapter.count).firstOrNull {
                     adapter.getItem(it).toString().equals(dementiaLevel, ignoreCase = true)
                 } ?: 0
-
                 val imageUrl = document.getString("profileImage")
                 originalProfilePicUrl = document.getString("profileImage")
 
+                // Loads profile picture with the url linked to account.
                 loadProfileImage(imageUrl)
-
                 editDementiaLevelSpinner.setSelection(position)
 
                 view?.findViewById<TextView>(R.id.full_name_text)?.text = name
@@ -200,10 +221,21 @@ class ProfileFragmentActivity : Fragment() {
         }
     }
 
+    /**
+     * A method to update the users data in firebase.
+     *
+     * @param fullName Users full name.
+     * @param age Users age.
+     * @param dementiaType Users type of dementia.
+     * @param dementiaLevel Users level of dementia.
+     */
     private fun updateUserData(fullName: String, age: Int, dementiaType: String, dementiaLevel: String) {
+
+        // Gets user id.
         val userId = mAuth.currentUser?.uid ?: return
         val email = mAuth.currentUser?.email
 
+        // Creates a hash map for the necessary updates.
         val userUpdates = hashMapOf<String, Any>(
             "fullName" to fullName,
             "age" to age,
@@ -212,6 +244,7 @@ class ProfileFragmentActivity : Fragment() {
             "email" to email.toString()
         )
 
+        // Searches database for that user and updates details.
         db.collection("users").document(userId)
             .set(userUpdates)
             .addOnSuccessListener {
@@ -223,6 +256,15 @@ class ProfileFragmentActivity : Fragment() {
             }
     }
 
+    /**
+     * A method to revert the UI once update has been made, as well as make sure the fields have
+     * been updated with the data.
+     *
+     * @param fullName Users new full name.
+     * @param age Users new age.
+     * @param dementiaType Users new type of dementia.
+     * @param dementiaLevel Users new level of dementia.
+     */
     private fun revertUIAfterUpdate(fullName: String, age: String, dementiaType: String, dementiaLevel: String) {
         view?.findViewById<Button>(R.id.edit_profile_button)?.visibility = View.VISIBLE
         view?.findViewById<Button>(R.id.cancel_edit_profile_button)?.visibility = View.GONE
@@ -246,22 +288,25 @@ class ProfileFragmentActivity : Fragment() {
             visibility = View.VISIBLE
         }
 
-        // Hide EditTexts and Spinner
         view?.findViewById<EditText>(R.id.full_name_edit_text)?.visibility = View.GONE
         view?.findViewById<EditText>(R.id.age_edit_text)?.visibility = View.GONE
         view?.findViewById<EditText>(R.id.dementia_type_edit_text)?.visibility = View.GONE
         view?.findViewById<Spinner>(R.id.dementia_level_spinner)?.visibility = View.GONE
     }
 
-    private fun openPictureFolder() {
-        val intent = Intent(Intent.ACTION_PICK)
-        intent.type = "image/*"
-        pickImageLauncher.launch(intent)
-    }
 
+    /**
+     * A method to upload the profile picture to firebase.
+     *
+     * @param imageUri The images Uri, so it can be stored in storage.
+     * @param userId the users id.
+     */
     private fun uploadImageToFirebaseStorage(imageUri: Uri, userId: String) {
+
+        //Gets firebase storage and creates the picture with the users id as the name
         val storageRef = FirebaseStorage.getInstance().reference.child("profileImages/$userId.jpg")
 
+        // Attempts to put the file into storage
         storageRef.putFile(imageUri).continueWithTask { task ->
             if (!task.isSuccessful) {
                 task.exception?.let {
@@ -271,27 +316,30 @@ class ProfileFragmentActivity : Fragment() {
             storageRef.downloadUrl
         }.addOnCompleteListener { task ->
             if (task.isSuccessful) {
+                // Updates database with URL for user.
                 val downloadUri = task.result
                 updateFirestoreWithImageUrl(userId, downloadUri.toString())
             } else {
-                // Handle failures
             }
         }
     }
 
+    /**
+     * A method which updates the users document with the url to the image.
+     *
+     * @param imageUrl Url link to the image.
+     * @param userId The users id.
+     */
     private fun updateFirestoreWithImageUrl(userId: String, imageUrl: String) {
         val db = FirebaseFirestore.getInstance()
 
-        // Update the user document in Firestore with the new image URL
+        // Finds the user to update their profile picture
         db.collection("users").document(userId).update("profileImage", imageUrl)
             .addOnSuccessListener {
-                // Operation was successful
-                Log.d("ProfileFragment", "DocumentSnapshot successfully updated with new image URL.")
 
+                // Loads into profile picture if successful.
                 val profileImageView: ShapeableImageView? = view?.findViewById(R.id.profile_image_view)
-
                 profileImageView?.let { imageView ->
-                    // Use imageView inside this block
                     Glide.with(this)
                         .load(selectedImageUri)
                         .placeholder(ContextCompat.getDrawable(requireContext(), R.drawable.profile_picture))
@@ -299,17 +347,18 @@ class ProfileFragmentActivity : Fragment() {
                         .into(imageView)
                 }
 
-
                 Toast.makeText(context, "Profile image updated successfully.", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener { e ->
-                // Operation failed
-                Log.w("ProfileFragment", "Error updating document with new image URL", e)
-                // Show an error message to the user
                 Toast.makeText(context, "Failed to update profile image.", Toast.LENGTH_SHORT).show()
             }
     }
 
+    /**
+     * A method to load the image into the profile picture image view.
+     *
+     * @param imageUrl Url link to the image.
+     */
     private fun loadProfileImage(imageUrl: String?) {
         val profileImageView: ShapeableImageView = view?.findViewById(R.id.profile_image_view) ?: return
         Glide.with(this)

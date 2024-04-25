@@ -7,7 +7,7 @@ import java.util.Date
 
 /**
  * A Model to keep track of all details for photos. Used to help upload it to Firebase, creating
- * quizzes with said pictures and displaying picture details.
+ * quizzes with said pictures and displaying picture details. Made parcelable
  * */
 data class PictureModel(
     val imageUrl: String? = null,

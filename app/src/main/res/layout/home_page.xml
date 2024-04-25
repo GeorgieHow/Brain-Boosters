@@ -20,7 +20,7 @@
     <com.ismaeldivita.chipnavigation.ChipNavigationBar
         android:id="@+id/bottom_nav_bar"
         android:layout_width="0dp"
-        android:layout_height="60dp"
+        android:layout_height="80dp"
         android:background="@color/primaryColor"
         android:fadingEdge="horizontal"
         app:cnb_menuResource="@menu/menu"

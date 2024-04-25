@@ -6,7 +6,8 @@
         android:id="@+id/nav_home"
         android:title="Home"
         android:icon="@drawable/home"
-        app:cnb_iconColor="#FFFFFF"/>
+        app:cnb_iconColor="#FFFFFF"
+        />
     <item
         android:id="@+id/nav_gallery"
         android:title="Gallery"
