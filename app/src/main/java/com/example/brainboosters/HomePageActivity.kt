@@ -46,9 +46,9 @@ class HomePageActivity : AppCompatActivity() {
         menuBottom.setOnItemSelectedListener { itemId ->
             // Check if trying to navigate away from UploadFragmentPart2, stops user from doing it.
             if (isUploadFragmentPart2DisplayedGetter() == true) {
-                Snackbar.make(rootView, "Please complete the current process before " +
-                        "navigating away",
-                    Snackbar.LENGTH_LONG).show()
+                //Snackbar.make(rootView, "Please complete the current process before " +
+                 //       "navigating away",
+                 //   Snackbar.LENGTH_LONG).show()
                 menuBottom.setItemSelected(R.id.nav_gallery, true)
             }
             // Handle navigation based on selected item.

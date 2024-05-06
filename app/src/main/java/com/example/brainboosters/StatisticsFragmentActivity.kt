@@ -546,31 +546,36 @@ class StatisticsFragmentActivity : Fragment() {
     private fun plotCurrentMonthWeeklyChart(quizResults: Map<Long, Pair<Int, Int>>, lineChart: LineChart) {
         val calendar = Calendar.getInstance()
 
-        // Get the current month were in from the start.
         calendar.set(Calendar.DAY_OF_MONTH, 1)
         calendar.set(Calendar.HOUR_OF_DAY, 0)
         calendar.clear(Calendar.MINUTE)
         calendar.clear(Calendar.SECOND)
         calendar.clear(Calendar.MILLISECOND)
 
-        // Create maps for correct and incorrect entries.
+
+        val firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+        val offset = (Calendar.MONDAY - firstDayOfWeek + 7) % 7
+
+        calendar.add(Calendar.DATE, -offset)
+
+        // Create maps for correct and incorrect entries
         val correctEntriesMap = mutableMapOf<Int, Entry>()
         val incorrectEntriesMap = mutableMapOf<Int, Entry>()
 
-        // Initialize entries for each week of the month, so 4.
         for (week in 0 until 4) {
             correctEntriesMap[week] = Entry(week.toFloat(), 0f)
             incorrectEntriesMap[week] = Entry(week.toFloat(), 0f)
         }
 
-        // Go through each result.
+
         quizResults.forEach { (timestamp, counts) ->
             calendar.timeInMillis = timestamp
+            val currentDayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
+            calendar.set(Calendar.DAY_OF_MONTH, 1)
+            calendar.add(Calendar.DATE, -offset)
+            val daysFromFirstWeekMonday = ((timestamp - calendar.timeInMillis) / (24 * 3600 * 1000)).toInt()
+            val weekOfMonth = daysFromFirstWeekMonday / 7
 
-            // Index starts from 0, so minus one from week its in.
-            val weekOfMonth = calendar.get(Calendar.WEEK_OF_MONTH) - 1
-
-            // Loop through each value, and add to the counts for each week.
             if (weekOfMonth in 0..3) {
                 correctEntriesMap[weekOfMonth]?.let {
                     it.y += counts.first.toFloat()
@@ -580,6 +585,8 @@ class StatisticsFragmentActivity : Fragment() {
                 }
             }
         }
+
+
 
         // Creates a line data set for correct answers.
         val correctLineDataSet = LineDataSet(correctEntriesMap.values.toList(), "Correct Answers").apply {

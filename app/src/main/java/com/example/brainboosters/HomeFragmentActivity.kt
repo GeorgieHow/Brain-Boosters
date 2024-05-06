@@ -145,6 +145,7 @@ class HomeFragmentActivity : Fragment() {
             val intent = Intent(context, WelcomePageActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
             startActivity(intent)
+            //activity?.finish()
         }
 
     }
